@@ -18,6 +18,23 @@ allprojects {
         mavenCentral()
         maven { url 'https://jitpack.io' }
     }
+
+    // A transitive dependency pulls kotlin-stdlib 1.8.20, which folds the old
+    // kotlin-stdlib-jdk7/jdk8 classes into kotlin-stdlib itself. Since the
+    // project's own kotlin-gradle-plugin is 1.7.10, that version's separate
+    // kotlin-stdlib-jdk7/jdk8 artifacts also land on the classpath and collide
+    // with the same classes now bundled in kotlin-stdlib 1.8.20 ("Duplicate
+    // class kotlin.collections.jdk8.CollectionsJDK8Kt ..."). Force every
+    // module in the tree onto one consistent set of stdlib versions so only
+    // one copy of each class is ever present.
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:1.8.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20"
+        }
+    }
 }
 
 task clean(type: Delete) {
