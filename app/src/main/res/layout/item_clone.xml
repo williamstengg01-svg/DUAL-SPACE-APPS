@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp">
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null" />
+
+        <ImageView
+            android:id="@+id/badgeFrozen"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|start"
+            android:background="@drawable/bg_badge"
+            android:contentDescription="@string/action_freeze"
+            android:padding="3dp"
+            android:src="@drawable/ic_freeze"
+            android:visibility="gone"
+            app:tint="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/badgeLock"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|end"
+            android:background="@drawable/bg_badge"
+            android:contentDescription="@string/action_lock"
+            android:padding="3dp"
+            android:src="@drawable/ic_lock"
+            android:visibility="gone"
+            app:tint="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/badgeHidden"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|start"
+            android:background="@drawable/bg_badge"
+            android:contentDescription="@string/action_hide"
+            android:padding="3dp"
+            android:src="@drawable/ic_hidden"
+            android:visibility="gone"
+            app:tint="@android:color/white" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textAppearance="?attr/textAppearanceLabelMedium" />
+</LinearLayout>

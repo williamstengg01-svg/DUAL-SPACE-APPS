@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- app_name is provided per product flavor in app/build.gradle -->
+
+    <!-- Titles -->
+    <string name="title_pick_app">Choose an app to clone</string>
+    <string name="title_clone_detail">Manage clone</string>
+    <string name="title_setup">Device setup</string>
+    <string name="title_settings">Settings</string>
+
+    <!-- Home -->
+    <plurals name="clone_count">
+        <item quantity="one">%d clone</item>
+        <item quantity="other">%d clones</item>
+    </plurals>
+    <string name="storage_total">Storage: %s</string>
+    <string name="storage_used">Storage used: %s</string>
+    <string name="empty_title">No clones yet</string>
+    <string name="empty_desc">Tap “Add clone” to create a second copy of any app. You can clone the same app as many times as you like.</string>
+    <string name="action_add_clone">Add clone</string>
+    <string name="action_show_hidden">Show hidden clones</string>
+    <string name="action_open">Open</string>
+    <string name="msg_clone_created">“%s” is ready</string>
+    <string name="msg_launch_failed">Could not open this clone. Try again or clear its data.</string>
+    <string name="msg_frozen">This clone is frozen.</string>
+    <string name="action_unfreeze">Unfreeze</string>
+    <string name="msg_clone_missing">This clone no longer exists.</string>
+
+    <!-- Picker -->
+    <string name="search_hint">Search apps</string>
+    <string name="action_show_system">Show system apps</string>
+    <string name="clones_existing">%d cloned</string>
+    <string name="confirm_clone">Create a clone of %s?</string>
+    <string name="confirm_clone_more">Create clone #%2$d of %1$s?</string>
+    <string name="action_clone">Clone</string>
+    <string name="msg_cloning">Creating clone and linking Google Play Services…</string>
+    <string name="msg_clone_failed">Clone failed</string>
+    <string name="abi_title">Different CPU architecture</string>
+    <string name="abi_need_32">%s is a 32-bit-only app. Install the “Dual Space 32-bit” companion app to clone it.</string>
+    <string name="abi_need_64">%s is a 64-bit-only app. Install the main 64-bit Dual Space app to clone it.</string>
+    <string name="abi_unsupported_short">Needs the other Dual Space (32/64-bit) build</string>
+
+    <!-- Detail -->
+    <string name="slot_n">Slot %d</string>
+    <string name="gms_linked">Google Play Services: linked ✓</string>
+    <string name="gms_linking">Google Play Services: will link on first launch</string>
+    <string name="gms_unavailable">Google Play Services not present on this phone</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_change_icon">Change icon</string>
+    <string name="action_reset">Reset</string>
+    <string name="hint_clone_name">Clone name</string>
+    <string name="action_freeze">Freeze</string>
+    <string name="desc_freeze">Stops the clone and prevents it from running in the background until you unfreeze it.</string>
+    <string name="action_hide">Hide from list</string>
+    <string name="desc_hide">Hidden clones only appear after you choose “Show hidden clones” and enter your PIN.</string>
+    <string name="action_lock">Require PIN / fingerprint</string>
+    <string name="desc_lock">Ask for the app lock every time this clone is opened.</string>
+    <string name="action_shortcut">Add home-screen shortcut</string>
+    <string name="msg_shortcut_requested">Shortcut requested. If nothing appears, allow “Home screen shortcuts” for Dual Space in system settings.</string>
+    <string name="msg_shortcut_unsupported">Your launcher does not support pinned shortcuts.</string>
+    <string name="action_clear_data">Clear data</string>
+    <string name="confirm_clear">Delete all data of this clone? You will be logged out inside it. The clone itself stays.</string>
+    <string name="action_delete">Delete clone</string>
+    <string name="confirm_delete">Delete this clone and all of its data? The original app on your phone is not affected.</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_detected">Detected: %1$s (%2$s)</string>
+    <string name="setup_intro">Some phone brands stop apps from running in the background. Grant the following once so your clones keep receiving messages and notifications.</string>
+    <string name="optional">Optional</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="action_skip">Skip for now</string>
+    <string name="action_done">Done</string>
+    <string name="brand_samsung">Samsung (One UI)</string>
+    <string name="brand_xiaomi">Xiaomi / Redmi / POCO (MIUI · HyperOS)</string>
+    <string name="brand_vivo">Vivo / iQOO (Funtouch · OriginOS)</string>
+    <string name="brand_oppo">Oppo / Realme / OnePlus (ColorOS)</string>
+    <string name="brand_other">Android</string>
+
+    <string name="step_battery_title">Battery optimisation</string>
+    <string name="step_battery_desc">Choose “Allow” / “Don’t optimise” so Android does not put Dual Space to sleep.</string>
+    <string name="step_autostart_title">Autostart</string>
+    <string name="step_autostart_desc_xiaomi">In Security → Autostart, turn on the switch next to Dual Space.</string>
+    <string name="step_autostart_desc_vivo">In i Manager → App manager → Autostart manager, enable Dual Space.</string>
+    <string name="step_autostart_desc_oppo">In Phone Manager → Privacy → Startup manager (Auto-launch), enable Dual Space.</string>
+    <string name="step_sleeping_title">Never-sleeping apps</string>
+    <string name="step_sleeping_desc_samsung">Battery → Background usage limits → “Never sleeping apps” → add Dual Space. Also remove it from “Sleeping” and “Deep sleeping” lists.</string>
+    <string name="step_popup_title">Background pop-ups</string>
+    <string name="step_popup_desc_xiaomi">In the permission page, allow “Display pop-up windows while running in the background” and “Display pop-up window”.</string>
+    <string name="step_popup_desc_vivo">Allow “Background pop-ups” and “Display over other apps” for Dual Space.</string>
+    <string name="step_power_title">Background power</string>
+    <string name="step_power_desc_xiaomi">Battery saver → choose “No restrictions” for Dual Space.</string>
+    <string name="step_power_desc_vivo">Background power consumption → allow high background power for Dual Space.</string>
+    <string name="step_power_desc_oppo">Battery → App battery management → Dual Space → “Allow background activity” / disable “Smart power”.</string>
+    <string name="step_notif_title">Notifications</string>
+    <string name="step_notif_desc">Make sure notifications are enabled — cloned apps deliver their notifications through Dual Space.</string>
+
+    <!-- Lock -->
+    <string name="lock_enter_pin">Enter PIN</string>
+    <string name="lock_set_pin">Set a new PIN (4–6 digits)</string>
+    <string name="lock_confirm_pin">Enter the PIN again</string>
+    <string name="lock_wrong">Wrong PIN</string>
+    <string name="lock_biometric_subtitle">Unlock Dual Space</string>
+    <string name="lock_use_pin">Use PIN</string>
+
+    <!-- Settings -->
+    <string name="pref_cat_security">Security</string>
+    <string name="pref_lock">App lock</string>
+    <string name="pref_lock_summary">Require a PIN or fingerprint to open Dual Space</string>
+    <string name="pref_change_pin">Change PIN</string>
+    <string name="pref_biometric">Allow fingerprint / face unlock</string>
+    <string name="pref_cat_appearance">Appearance</string>
+    <string name="pref_theme">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="pref_cat_system">System</string>
+    <string name="pref_setup_summary">Re-run the battery / autostart guide for this phone</string>
+    <string name="pref_gms">Google Play Services in clones</string>
+    <string name="pref_gms_summary_ok">Linked automatically inside every clone — no action needed</string>
+    <string name="pref_gms_summary_none">Not available: this phone has no Google Play Services</string>
+    <string name="pref_cat_about">About</string>
+    <string name="pref_about_summary">Version %1$s · %2$s build</string>
+    <string name="pref_no_ads">No ads, no tracking</string>
+    <string name="pref_no_ads_summary">Dual Space contains no advertising or analytics SDK. Clone data never leaves your phone.</string>
+    <string name="about_text">Dual Space clones any installed app into an isolated sandbox with its own data, login and notifications. Clone an app as many times as you need.\n\nVirtualization engine: BlackBox (Apache 2.0).</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="seed_primary">#1E63C8</color>
+    <color name="seed_primary_container">#D8E2FF</color>
+    <color name="seed_on_primary_container">#001A41</color>
+    <color name="seed_primary_dark">#ADC6FF</color>
+    <color name="seed_primary_container_dark">#004494</color>
+    <color name="seed_on_primary_container_dark">#D8E2FF</color>
+    <color name="seed_secondary">#00A67E</color>
+    <color name="ic_launcher_background">#1E63C8</color>
+</resources>

@@ -1,0 +1,60 @@
+package com.dualspace.clone.util
+
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
+import java.security.MessageDigest
+
+/** Small typed wrapper over SharedPreferences for host-app settings. */
+object Prefs {
+    private const val FILE = "dualspace_prefs"
+
+    private lateinit var sp: SharedPreferences
+
+    fun init(context: Context) {
+        sp = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+    }
+
+    // ---- first-run / setup wizard ----
+    var setupCompleted: Boolean
+        get() = sp.getBoolean("setup_completed", false)
+        set(v) = sp.edit { putBoolean("setup_completed", v) }
+
+    fun isStepDone(key: String) = sp.getBoolean("setup_step_$key", false)
+    fun setStepDone(key: String, done: Boolean) = sp.edit { putBoolean("setup_step_$key", done) }
+
+    // ---- app lock ----
+    var lockEnabled: Boolean
+        get() = sp.getBoolean("lock_enabled", false)
+        set(v) = sp.edit { putBoolean("lock_enabled", v) }
+
+    var biometricEnabled: Boolean
+        get() = sp.getBoolean("biometric_enabled", true)
+        set(v) = sp.edit { putBoolean("biometric_enabled", v) }
+
+    fun hasPin(): Boolean = sp.getString("pin_hash", null) != null
+
+    fun setPin(pin: String) = sp.edit { putString("pin_hash", sha256(pin)) }
+
+    fun checkPin(pin: String): Boolean = sp.getString("pin_hash", null) == sha256(pin)
+
+    fun clearPin() = sp.edit { remove("pin_hash") }
+
+    // ---- UI ----
+    var showHidden: Boolean
+        get() = sp.getBoolean("show_hidden", false)
+        set(v) = sp.edit { putBoolean("show_hidden", v) }
+
+    var themeMode: String
+        get() = sp.getString("theme_mode", "system") ?: "system"
+        set(v) = sp.edit { putString("theme_mode", v) }
+
+    // ---- GMS bookkeeping ----
+    var hostGmsVersion: Long
+        get() = sp.getLong("host_gms_version", -1L)
+        set(v) = sp.edit { putLong("host_gms_version", v) }
+
+    private fun sha256(s: String): String =
+        MessageDigest.getInstance("SHA-256").digest(s.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.DualSpace" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/seed_primary_dark</item>
+        <item name="colorPrimaryContainer">@color/seed_primary_container_dark</item>
+        <item name="colorOnPrimaryContainer">@color/seed_on_primary_container_dark</item>
+        <item name="colorSecondary">@color/seed_secondary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

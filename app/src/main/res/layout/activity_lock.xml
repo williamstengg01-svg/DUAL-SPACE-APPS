@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="48dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_lock"
+        app:tint="?attr/colorPrimary" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/lock_enter_pin"
+        android:textAppearance="?attr/textAppearanceTitleLarge" />
+
+    <LinearLayout
+        android:id="@+id/dots"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal">
+
+        <View android:id="@+id/d1" style="@style/PinDot" />
+        <View android:id="@+id/d2" style="@style/PinDot" />
+        <View android:id="@+id/d3" style="@style/PinDot" />
+        <View android:id="@+id/d4" style="@style/PinDot" />
+        <View android:id="@+id/d5" style="@style/PinDot" />
+        <View android:id="@+id/d6" style="@style/PinDot" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/lock_wrong"
+        android:textColor="?attr/colorError"
+        android:visibility="invisible" />
+
+    <Space
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="4">
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/k1" style="@style/PinKey" android:text="1" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k2" style="@style/PinKey" android:text="2" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k3" style="@style/PinKey" android:text="3" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k4" style="@style/PinKey" android:text="4" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k5" style="@style/PinKey" android:text="5" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k6" style="@style/PinKey" android:text="6" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k7" style="@style/PinKey" android:text="7" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k8" style="@style/PinKey" android:text="8" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k9" style="@style/PinKey" android:text="9" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/kBio" style="@style/PinKey" app:icon="@drawable/ic_fingerprint" app:iconGravity="textStart" app:iconPadding="0dp" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/k0" style="@style/PinKey" android:text="0" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/kBack" style="@style/PinKey" app:icon="@drawable/ic_backspace" app:iconGravity="textStart" app:iconPadding="0dp" />
+    </GridLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/kOk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:enabled="false"
+        android:text="@android:string/ok" />
+</LinearLayout>

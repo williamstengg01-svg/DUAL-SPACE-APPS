@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_pick_app">Pilih aplikasi untuk digandakan</string>
+    <string name="title_clone_detail">Kelola klon</string>
+    <string name="title_setup">Pengaturan perangkat</string>
+    <string name="title_settings">Pengaturan</string>
+
+    <plurals name="clone_count">
+        <item quantity="other">%d klon</item>
+    </plurals>
+    <string name="storage_total">Penyimpanan: %s</string>
+    <string name="storage_used">Penyimpanan terpakai: %s</string>
+    <string name="empty_title">Belum ada klon</string>
+    <string name="empty_desc">Ketuk “Tambah klon” untuk membuat salinan kedua dari aplikasi apa pun. Aplikasi yang sama bisa digandakan berapa kali pun.</string>
+    <string name="action_add_clone">Tambah klon</string>
+    <string name="action_show_hidden">Tampilkan klon tersembunyi</string>
+    <string name="action_open">Buka</string>
+    <string name="msg_clone_created">“%s” siap digunakan</string>
+    <string name="msg_launch_failed">Klon tidak bisa dibuka. Coba lagi atau hapus datanya.</string>
+    <string name="msg_frozen">Klon ini dibekukan.</string>
+    <string name="action_unfreeze">Aktifkan lagi</string>
+    <string name="msg_clone_missing">Klon ini sudah tidak ada.</string>
+
+    <string name="search_hint">Cari aplikasi</string>
+    <string name="action_show_system">Tampilkan aplikasi sistem</string>
+    <string name="clones_existing">%d klon</string>
+    <string name="confirm_clone">Buat klon dari %s?</string>
+    <string name="confirm_clone_more">Buat klon ke-%2$d dari %1$s?</string>
+    <string name="action_clone">Gandakan</string>
+    <string name="msg_cloning">Membuat klon dan menghubungkan Google Play Services…</string>
+    <string name="msg_clone_failed">Gagal menggandakan</string>
+    <string name="abi_title">Arsitektur CPU berbeda</string>
+    <string name="abi_need_32">%s hanya mendukung 32-bit. Pasang aplikasi pendamping “Dual Space 32-bit” untuk menggandakannya.</string>
+    <string name="abi_need_64">%s hanya mendukung 64-bit. Pasang aplikasi utama Dual Space 64-bit untuk menggandakannya.</string>
+    <string name="abi_unsupported_short">Butuh versi Dual Space lainnya (32/64-bit)</string>
+
+    <string name="slot_n">Slot %d</string>
+    <string name="gms_linked">Google Play Services: terhubung ✓</string>
+    <string name="gms_linking">Google Play Services: akan terhubung saat pertama dibuka</string>
+    <string name="gms_unavailable">Google Play Services tidak ada di ponsel ini</string>
+    <string name="action_rename">Ubah nama</string>
+    <string name="action_change_icon">Ubah ikon</string>
+    <string name="action_reset">Reset</string>
+    <string name="hint_clone_name">Nama klon</string>
+    <string name="action_freeze">Bekukan</string>
+    <string name="desc_freeze">Menghentikan klon dan mencegahnya berjalan di latar belakang sampai diaktifkan lagi.</string>
+    <string name="action_hide">Sembunyikan dari daftar</string>
+    <string name="desc_hide">Klon tersembunyi hanya muncul setelah memilih “Tampilkan klon tersembunyi” dan memasukkan PIN.</string>
+    <string name="action_lock">Wajib PIN / sidik jari</string>
+    <string name="desc_lock">Minta kunci aplikasi setiap kali klon ini dibuka.</string>
+    <string name="action_shortcut">Tambah pintasan ke layar utama</string>
+    <string name="msg_shortcut_requested">Pintasan diminta. Jika tidak muncul, izinkan “Pintasan layar utama” untuk Dual Space di pengaturan sistem.</string>
+    <string name="msg_shortcut_unsupported">Launcher Anda tidak mendukung pintasan.</string>
+    <string name="action_clear_data">Hapus data</string>
+    <string name="confirm_clear">Hapus semua data klon ini? Anda akan keluar (logout) di dalamnya. Klon tetap ada.</string>
+    <string name="action_delete">Hapus klon</string>
+    <string name="confirm_delete">Hapus klon ini beserta seluruh datanya? Aplikasi asli di ponsel tidak terpengaruh.</string>
+
+    <string name="setup_detected">Terdeteksi: %1$s (%2$s)</string>
+    <string name="setup_intro">Beberapa merek ponsel menghentikan aplikasi di latar belakang. Berikan izin berikut sekali saja agar klon tetap menerima pesan dan notifikasi.</string>
+    <string name="optional">Opsional</string>
+    <string name="action_open_settings">Buka pengaturan</string>
+    <string name="action_skip">Lewati dulu</string>
+    <string name="action_done">Selesai</string>
+    <string name="brand_samsung">Samsung (One UI)</string>
+    <string name="brand_xiaomi">Xiaomi / Redmi / POCO (MIUI · HyperOS)</string>
+    <string name="brand_vivo">Vivo / iQOO (Funtouch · OriginOS)</string>
+    <string name="brand_oppo">Oppo / Realme / OnePlus (ColorOS)</string>
+    <string name="brand_other">Android</string>
+
+    <string name="step_battery_title">Optimalisasi baterai</string>
+    <string name="step_battery_desc">Pilih “Izinkan” / “Jangan optimalkan” agar Android tidak menidurkan Dual Space.</string>
+    <string name="step_autostart_title">Mulai otomatis (Autostart)</string>
+    <string name="step_autostart_desc_xiaomi">Di Keamanan → Mulai otomatis, aktifkan tombol di samping Dual Space.</string>
+    <string name="step_autostart_desc_vivo">Di i Manager → Pengelola aplikasi → Pengelola mulai otomatis, aktifkan Dual Space.</string>
+    <string name="step_autostart_desc_oppo">Di Phone Manager → Privasi → Pengelola startup (Auto-launch), aktifkan Dual Space.</string>
+    <string name="step_sleeping_title">Aplikasi tidak pernah tidur</string>
+    <string name="step_sleeping_desc_samsung">Baterai → Batas penggunaan latar belakang → “Aplikasi yang tidak pernah tidur” → tambahkan Dual Space. Hapus juga dari daftar “Tidur” dan “Tidur nyenyak”.</string>
+    <string name="step_popup_title">Pop-up latar belakang</string>
+    <string name="step_popup_desc_xiaomi">Di halaman izin, izinkan “Tampilkan jendela pop-up saat berjalan di latar belakang” dan “Tampilkan jendela pop-up”.</string>
+    <string name="step_popup_desc_vivo">Izinkan “Pop-up latar belakang” dan “Tampil di atas aplikasi lain” untuk Dual Space.</string>
+    <string name="step_power_title">Daya latar belakang</string>
+    <string name="step_power_desc_xiaomi">Penghemat baterai → pilih “Tanpa batasan” untuk Dual Space.</string>
+    <string name="step_power_desc_vivo">Konsumsi daya latar belakang → izinkan daya latar belakang tinggi untuk Dual Space.</string>
+    <string name="step_power_desc_oppo">Baterai → Manajemen baterai aplikasi → Dual Space → “Izinkan aktivitas latar belakang” / matikan “Smart power”.</string>
+    <string name="step_notif_title">Notifikasi</string>
+    <string name="step_notif_desc">Pastikan notifikasi aktif — aplikasi klon mengirim notifikasinya melalui Dual Space.</string>
+
+    <string name="lock_enter_pin">Masukkan PIN</string>
+    <string name="lock_set_pin">Buat PIN baru (4–6 digit)</string>
+    <string name="lock_confirm_pin">Masukkan PIN sekali lagi</string>
+    <string name="lock_wrong">PIN salah</string>
+    <string name="lock_biometric_subtitle">Buka kunci Dual Space</string>
+    <string name="lock_use_pin">Gunakan PIN</string>
+
+    <string name="pref_cat_security">Keamanan</string>
+    <string name="pref_lock">Kunci aplikasi</string>
+    <string name="pref_lock_summary">Minta PIN atau sidik jari untuk membuka Dual Space</string>
+    <string name="pref_change_pin">Ubah PIN</string>
+    <string name="pref_biometric">Izinkan sidik jari / wajah</string>
+    <string name="pref_cat_appearance">Tampilan</string>
+    <string name="pref_theme">Tema</string>
+    <string name="theme_system">Ikuti sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="pref_cat_system">Sistem</string>
+    <string name="pref_setup_summary">Jalankan lagi panduan baterai / autostart untuk ponsel ini</string>
+    <string name="pref_gms">Google Play Services di dalam klon</string>
+    <string name="pref_gms_summary_ok">Terhubung otomatis di setiap klon — tidak perlu tindakan apa pun</string>
+    <string name="pref_gms_summary_none">Tidak tersedia: ponsel ini tidak memiliki Google Play Services</string>
+    <string name="pref_cat_about">Tentang</string>
+    <string name="pref_about_summary">Versi %1$s · build %2$s</string>
+    <string name="pref_no_ads">Tanpa iklan, tanpa pelacakan</string>
+    <string name="pref_no_ads_summary">Dual Space tidak berisi SDK iklan atau analitik. Data klon tidak pernah keluar dari ponsel Anda.</string>
+    <string name="about_text">Dual Space menggandakan aplikasi apa pun ke dalam sandbox terpisah dengan data, login, dan notifikasi sendiri. Gandakan aplikasi sebanyak yang Anda butuhkan.\n\nMesin virtualisasi: BlackBox (Apache 2.0).</string>
+</resources>

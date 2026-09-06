@@ -1,0 +1,82 @@
+name: Build Dual Space APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-33
+            platforms;android-30
+            build-tools;30.0.3
+            ndk;21.4.7075529
+            cmake;3.18.1
+
+      - name: Prepare signing key
+        run: |
+          mkdir -p keystore
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore/dualspace.jks
+            cat > keystore/keystore.properties <<EOF
+          storeFile=dualspace.jks
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+          else
+            # No secrets configured: generate a throw-away key so the release APK is still installable.
+            keytool -genkeypair -v -keystore keystore/dualspace.jks -alias dualspace \
+              -keyalg RSA -keysize 2048 -validity 10000 -storepass dualspace -keypass dualspace \
+              -dname "CN=Dual Space, O=DualSpace, C=ID"
+            cat > keystore/keystore.properties <<EOF
+          storeFile=dualspace.jks
+          storePassword=dualspace
+          keyAlias=dualspace
+          keyPassword=dualspace
+          EOF
+            echo "::warning::Built with a temporary signing key. Add KEYSTORE_BASE64/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable key."
+          fi
+
+      - name: Build release APKs (arm64 + arm32)
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Verify no ad / analytics SDKs in the dependency graph
+        run: |
+          ./gradlew --no-daemon :app:dependencies --configuration arm64ReleaseRuntimeClasspath > deps.txt
+          if grep -iE "admob|play-services-ads|unity3d.ads|applovin|audience-network|ironsource|vungle|chartboost|inmobi|mopub|tapjoy|firebase-analytics|appsflyer|adjust" deps.txt; then
+            echo "::error::Advertising/analytics SDK detected"; exit 1
+          fi
+          echo "No ad SDKs found."
+
+      - name: Run unit tests
+        run: ./gradlew --no-daemon :app:testArm64ReleaseUnitTest
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: DualSpace-APKs
+          path: |
+            app/build/outputs/apk/arm64/release/*.apk
+            app/build/outputs/apk/arm32/release/*.apk
+          if-no-files-found: error

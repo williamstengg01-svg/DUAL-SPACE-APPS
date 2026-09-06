@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/pref_cat_security">
+        <SwitchPreferenceCompat
+            android:key="lock_enabled"
+            android:title="@string/pref_lock"
+            android:summary="@string/pref_lock_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:key="change_pin"
+            android:title="@string/pref_change_pin"
+            android:dependency="lock_enabled"
+            app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            android:key="biometric"
+            android:title="@string/pref_biometric"
+            android:dependency="lock_enabled"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_cat_appearance">
+        <ListPreference
+            android:key="theme"
+            android:title="@string/pref_theme"
+            android:entries="@array/theme_entries"
+            android:entryValues="@array/theme_values"
+            android:defaultValue="system"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_cat_system">
+        <Preference
+            android:key="setup"
+            android:title="@string/title_setup"
+            android:summary="@string/pref_setup_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:key="gms"
+            android:title="@string/pref_gms"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_cat_about">
+        <Preference
+            android:key="about"
+            android:title="@string/app_name"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:title="@string/pref_no_ads"
+            android:summary="@string/pref_no_ads_summary"
+            android:selectable="false"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+</PreferenceScreen>
