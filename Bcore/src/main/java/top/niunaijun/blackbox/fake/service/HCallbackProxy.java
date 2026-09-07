@@ -101,19 +101,63 @@ public class HCallbackProxy implements IInjectHook, Handler.Callback {
     }
 
     private Object getLaunchActivityItem(Object clientTransaction) {
-        List<Object> mActivityCallbacks = BRClientTransaction.get(clientTransaction).mActivityCallbacks();
-
-        if (mActivityCallbacks == null) {
-            Slog.e(TAG, "mActivityCallbacks is null for clientTransaction: " + clientTransaction);
+        // Android 9 - 15 keep the callbacks in ClientTransaction.mActivityCallbacks.
+        // Android 16 removed that (deprecated) list together with mActivityToken and
+        // mLifecycleStateRequest; every item now lives in mTransactionItems. Try the old
+        // field first and fall back to the new one so a single build covers all versions.
+        List<Object> items = null;
+        try {
+            items = BRClientTransaction.get(clientTransaction).mActivityCallbacks();
+        } catch (Throwable ignored) {
+        }
+        if (items == null || items.isEmpty()) {
+            try {
+                items = BRClientTransaction.get(clientTransaction).mTransactionItems();
+            } catch (Throwable ignored) {
+            }
+        }
+        if (items == null) {
+            Slog.e(TAG, "No activity callbacks / transaction items in " + clientTransaction);
             return null;
         }
 
-        for (Object obj : mActivityCallbacks) {
-            if (BRLaunchActivityItem.getRealClass().getName().equals(obj.getClass().getCanonicalName())) {
+        Class<?> launchItemClass = BRLaunchActivityItem.getRealClass();
+        for (Object obj : items) {
+            if (obj == null) continue;
+            if (launchItemClass != null ? launchItemClass.isInstance(obj)
+                    : "android.app.servertransaction.LaunchActivityItem".equals(obj.getClass().getName())) {
                 return obj;
             }
         }
         return null;
+    }
+
+    /**
+     * The activity token used to be a field of ClientTransaction. Since Android 15 it is also
+     * carried by each ActivityTransactionItem, and on Android 16 that is the only place left.
+     */
+    private IBinder getActivityToken(Object clientTransaction, Object launchItem) {
+        IBinder token = null;
+        try {
+            token = BRClientTransaction.get(clientTransaction).mActivityToken();
+        } catch (Throwable ignored) {
+        }
+        if (token == null && launchItem != null) {
+            try {
+                token = BRLaunchActivityItem.get(launchItem).mActivityToken();
+            } catch (Throwable ignored) {
+            }
+        }
+        if (token == null && launchItem != null) {
+            try {
+                token = BRLaunchActivityItem.get(launchItem).getActivityToken();
+            } catch (Throwable ignored) {
+            }
+        }
+        if (token == null) {
+            Slog.e(TAG, "Could not resolve activity token from " + clientTransaction);
+        }
+        return token;
     }
 
     private boolean handleLaunchActivity(Object client) {
@@ -132,7 +176,7 @@ public class HCallbackProxy implements IInjectHook, Handler.Callback {
         IBinder token;
         if (BuildCompat.isPie()) {
             intent = BRLaunchActivityItem.get(r).mIntent();
-            token = BRClientTransaction.get(client).mActivityToken();
+            token = getActivityToken(client, r);
         } else {
             ActivityThreadActivityClientRecordContext clientRecordContext = BRActivityThreadActivityClientRecord.get(r);
             intent = clientRecordContext.intent();

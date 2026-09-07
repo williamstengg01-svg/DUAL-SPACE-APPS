@@ -20,6 +20,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.dualspace.clone.util.FailureText
 
 /** Home screen: grid of every clone, tap to launch, long-press to manage, FAB to add. */
 class MainActivity : AppCompatActivity() {
@@ -88,9 +89,18 @@ class MainActivity : AppCompatActivity() {
     private fun doLaunch(clone: Clone) {
         b.progress.visibility = View.VISIBLE
         lifecycleScope.launch {
-            val ok = withContext(Dispatchers.IO) { CloneManager.launch(clone) }
+            val result = withContext(Dispatchers.IO) {
+                runCatching { CloneManager.launch(clone) }
+                    .getOrElse { CloneManager.LaunchResult.Failed(FailureText.describe(it)) }
+            }
             b.progress.visibility = View.GONE
-            if (!ok) Snackbar.make(b.root, R.string.msg_launch_failed, Snackbar.LENGTH_LONG).show()
+            if (result is CloneManager.LaunchResult.Failed) {
+                Snackbar.make(b.root, getString(R.string.msg_launch_failed_reason, result.reason), Snackbar.LENGTH_LONG)
+                    .setAction(R.string.action_details) {
+                        startActivity(Intent(this@MainActivity, DiagnosticsActivity::class.java))
+                    }
+                    .show()
+            }
         }
     }
 

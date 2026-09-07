@@ -515,11 +515,24 @@ public class BPackageManager extends BlackManager<IBPackageManagerService> {
                 }
             }
             
-            return getService().installPackageAsUser(file, option, userId);
+            IBPackageManagerService service = getServiceWithFallback();
+            if (service == null) {
+                Log.w(TAG, "installPackageAsUser: engine package service unavailable");
+                return new InstallResult().installError(
+                        "The Dual Space engine is not running yet. Close Dual Space completely, open it again and retry.");
+            }
+            InstallResult result = service.installPackageAsUser(file, option, userId);
+            if (result == null) {
+                return new InstallResult().installError("The engine returned no result for this install.");
+            }
+            return result;
         } catch (RemoteException e) {
             crash(e);
+            return new InstallResult().installError("Engine connection lost during install: " + e);
+        } catch (Throwable t) {
+            crash(t);
+            return new InstallResult().installError("Install failed: " + t);
         }
-        return null;
     }
 
     public List<ApplicationInfo> getInstalledApplications(int flags, int userId) {

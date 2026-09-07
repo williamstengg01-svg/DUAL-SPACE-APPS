@@ -18,6 +18,9 @@ import top.niunaijun.blackbox.BlackBoxCore
 import top.niunaijun.blackbox.core.env.BEnvironment
 import top.niunaijun.blackbox.utils.AbiUtils
 import java.io.File
+import com.dualspace.clone.DualSpaceApp
+import com.dualspace.clone.util.CrashLog
+import com.dualspace.clone.util.FailureText
 
 /** Thin façade over the engine + CloneStore. All methods are blocking; call from IO. */
 object CloneManager {
@@ -25,6 +28,11 @@ object CloneManager {
     sealed class Result {
         data class Ok(val clone: Clone) : Result()
         data class Error(val message: String) : Result()
+    }
+
+    sealed class LaunchResult {
+        object Ok : LaunchResult()
+        data class Failed(val reason: String) : LaunchResult()
     }
 
     private val core get() = BlackBoxCore.get()
@@ -60,7 +68,16 @@ object CloneManager {
      *  2. make sure Google Play Services is already linked in that slot,
      *  3. install the app into the slot.
      */
-    fun createClone(context: Context, packageName: String): Result {
+    fun createClone(context: Context, packageName: String): Result = try {
+        createCloneInternal(context, packageName)
+    } catch (t: Throwable) {
+        // Anything the engine throws (it is not shy about NullPointerExceptions when its
+        // service process is not up yet) must become a message, never a crash of the host.
+        CrashLog.note(context, "clone $packageName", t)
+        Result.Error(FailureText.describe(t))
+    }
+
+    private fun createCloneInternal(context: Context, packageName: String): Result {
         val pm = context.packageManager
         val appLabel = try {
             pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
@@ -76,8 +93,8 @@ object CloneManager {
 
         // Step 3: mirror the installed APK into the sandbox.
         val install = core.installPackageAsUser(packageName, userId)
-        if (!install.success) {
-            return Result.Error(install.msg ?: "Install failed")
+        if (install == null || !install.success) {
+            return Result.Error(install?.msg ?: "Install failed: the engine returned no result")
         }
 
         val index = CloneStore.nextIndexFor(packageName)
@@ -91,11 +108,34 @@ object CloneManager {
         return Result.Ok(clone)
     }
 
-    fun launch(clone: Clone): Boolean {
-        if (clone.frozen) return false
-        // Belt and braces: GMS could have been wiped by "clear data"; make sure it is there.
-        GmsLinker.ensure(clone.userId)
-        return runCatching { core.launchApk(clone.packageName, clone.userId) }.getOrDefault(false)
+    /**
+     * Start a clone. Never throws: every failure comes back as [LaunchResult.Failed] with a
+     * human-readable reason, and is also written to the Diagnostics log.
+     */
+    fun launch(clone: Clone): LaunchResult {
+        if (clone.frozen) return LaunchResult.Failed("This clone is frozen.")
+        return try {
+            // Belt and braces: GMS could have been wiped by "clear data"; make sure it is there.
+            runCatching { GmsLinker.ensure(clone.userId) }
+
+            // The sandbox can lose the package (engine data cleared, interrupted update) while
+            // the registry still lists the clone. Re-mirror it instead of failing with
+            // "no launch intent".
+            val installed = runCatching { core.isInstalled(clone.packageName, clone.userId) }.getOrDefault(true)
+            if (!installed) {
+                ensureUser(clone.userId)
+                val r = core.installPackageAsUser(clone.packageName, clone.userId)
+                if (r == null || !r.success) {
+                    return LaunchResult.Failed("Could not re-install the app into its sandbox: ${r?.msg ?: "no result"}")
+                }
+            }
+
+            if (core.launchApk(clone.packageName, clone.userId)) LaunchResult.Ok
+            else LaunchResult.Failed("The engine found nothing to launch for ${clone.packageName} (slot ${clone.userId}).")
+        } catch (t: Throwable) {
+            CrashLog.note(DualSpaceApp.appContext, "launch ${clone.packageName} slot ${clone.userId}", t)
+            LaunchResult.Failed(FailureText.describe(t))
+        }
     }
 
     fun stop(clone: Clone) {

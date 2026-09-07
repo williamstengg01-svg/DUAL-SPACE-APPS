@@ -12,6 +12,7 @@ import com.dualspace.clone.data.CloneStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.dualspace.clone.util.FailureText
 
 /** Invisible trampoline used by home-screen shortcuts: launch one clone, then go away. */
 class ShortcutActivity : AppCompatActivity() {
@@ -30,8 +31,13 @@ class ShortcutActivity : AppCompatActivity() {
     private fun launch() {
         val clone = CloneStore.byId(intent.getStringExtra(EXTRA_ID) ?: "") ?: run { finish(); return }
         lifecycleScope.launch {
-            val ok = withContext(Dispatchers.IO) { CloneManager.launch(clone) }
-            if (!ok) Toast.makeText(this@ShortcutActivity, R.string.msg_launch_failed, Toast.LENGTH_SHORT).show()
+            val result = withContext(Dispatchers.IO) {
+                runCatching { CloneManager.launch(clone) }
+                    .getOrElse { CloneManager.LaunchResult.Failed(FailureText.describe(it)) }
+            }
+            if (result is CloneManager.LaunchResult.Failed) {
+                Toast.makeText(this@ShortcutActivity, getString(R.string.msg_launch_failed_reason, result.reason), Toast.LENGTH_LONG).show()
+            }
             finish()
         }
     }

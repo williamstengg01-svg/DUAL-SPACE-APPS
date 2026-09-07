@@ -17,6 +17,8 @@
     <string name="action_open">Buka</string>
     <string name="msg_clone_created">“%s” siap digunakan</string>
     <string name="msg_launch_failed">Klon tidak bisa dibuka. Coba lagi atau hapus datanya.</string>
+    <string name="msg_launch_failed_reason">Klon tidak bisa dibuka.\n%s</string>
+    <string name="action_details">Detail</string>
     <string name="msg_frozen">Klon ini dibekukan.</string>
     <string name="action_unfreeze">Aktifkan lagi</string>
     <string name="msg_clone_missing">Klon ini sudah tidak ada.</string>

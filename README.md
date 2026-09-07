@@ -70,10 +70,36 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
 
 ## Changelog
 
+* **1.1.1** — fixes clones that bounced straight back to the home screen:
+  * engine: activity hand-over hook now works on **Android 16** (the framework removed
+    `ClientTransaction.mActivityCallbacks` / `mActivityToken`; the hook now reads
+    `mTransactionItems` and the per-item token as well);
+  * engine: cloning no longer crashes the host app when the engine service is not up yet
+    (a `NullPointerException` in the install path is now reported as a message);
+  * engine: the launch splash gives up after 12 s with a message instead of hanging, and a
+    stub activity that cannot hand over stops retrying instead of looping;
+  * engine: R8 shrinking of the reflection-heavy engine module is off;
+  * app: every clone/launch failure now shows *why* (and is recorded in Diagnostics), and a
+    clone whose sandbox copy went missing is re-installed automatically on launch.
 * **1.1.0** — switched to the maintained *NewBlackbox* engine (Android 13/14/15 support; fixes
   clones that closed immediately on modern phones), added *Diagnostics* screen with on-device
   crash log, added *Storage access* setup step, removed the engine's remote log uploader.
 * **1.0.0** — first release.
+
+## Troubleshooting — "the clone goes straight back to the home screen"
+
+1. Open the clone again from Dual Space. Since 1.1.1 a failed launch shows a message with the
+   reason instead of silently closing.
+2. Open **Settings → Diagnostics** inside Dual Space. Every failed launch, failed clone and
+   crash (including crashes inside the cloned app's own process) is listed there with a stack
+   trace. Tap **Share** and send the text when asking for help — it contains the Android
+   version, the device model and the exact exception, which is what is needed to fix it.
+3. Make sure the setup wizard steps are done (battery optimisation, storage access, and the
+   OEM autostart permission on Xiaomi / Vivo / Oppo). Aggressive battery managers kill the
+   engine's background process, and a clone cannot start without it.
+4. If the phone was just updated to a new Android major version, the engine may need a
+   compatibility fix for that version. The Diagnostics report shows which framework call
+   failed.
 
 ## Known limits (please read)
 

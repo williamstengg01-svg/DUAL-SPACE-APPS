@@ -22,6 +22,8 @@
     <string name="action_open">Open</string>
     <string name="msg_clone_created">“%s” is ready</string>
     <string name="msg_launch_failed">Could not open this clone. Try again or clear its data.</string>
+    <string name="msg_launch_failed_reason">Could not open this clone.\n%s</string>
+    <string name="action_details">Details</string>
     <string name="msg_frozen">This clone is frozen.</string>
     <string name="action_unfreeze">Unfreeze</string>
     <string name="msg_clone_missing">This clone no longer exists.</string>

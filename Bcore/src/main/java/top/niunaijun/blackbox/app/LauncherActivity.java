@@ -26,6 +26,27 @@ public class LauncherActivity extends Activity {
     public static final String KEY_USER_ID = "launch_user_id";
     private boolean isRunning = false;
 
+    /**
+     * How long we give the cloned app to take over the screen. If nothing has appeared by
+     * then the launch failed somewhere in the engine; instead of leaving the user staring at
+     * this splash forever, say so and go back.
+     */
+    private static final long START_TIMEOUT_MS = 12_000L;
+    private final android.os.Handler mWatchdog = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable mStartTimeout = () -> {
+        if (isFinishing() || isRunning) return;
+        Slog.e(TAG, "Cloned app did not appear within " + START_TIMEOUT_MS + " ms, giving up");
+        failAndFinish();
+    };
+
+    private void failAndFinish() {
+        try {
+            android.widget.Toast.makeText(getApplicationContext(), R.string.launcher_start_failed, android.widget.Toast.LENGTH_LONG).show();
+        } catch (Throwable ignored) {
+        }
+        finish();
+    }
+
     public static void launch(Intent intent, int userId) {
         try {
             Intent splash = new Intent();
@@ -123,6 +144,7 @@ public class LauncherActivity extends Activity {
             
             
             launchAppAsync(launchIntent, userId);
+            mWatchdog.postDelayed(mStartTimeout, START_TIMEOUT_MS);
             
         } catch (Exception e) {
             Slog.e(TAG, "Critical error in LauncherActivity.onCreate()", e);
@@ -193,6 +215,8 @@ public class LauncherActivity extends Activity {
                     try {
                         
                         Slog.e(TAG, "Failed to launch app: " + e.getMessage());
+                        mWatchdog.removeCallbacks(mStartTimeout);
+                        failAndFinish();
                     } catch (Exception uiException) {
                         Slog.e(TAG, "Error showing error message", uiException);
                     }
@@ -204,14 +228,24 @@ public class LauncherActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        // Something else is now in front of us: the cloned app took over. Stop the watchdog.
         isRunning = true;
+        mWatchdog.removeCallbacks(mStartTimeout);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (isRunning) {
+            // We were covered by the clone and are visible again, so the clone went away
+            // (finished or crashed). Nothing left to do here.
             finish();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        mWatchdog.removeCallbacks(mStartTimeout);
+        super.onDestroy();
     }
 }

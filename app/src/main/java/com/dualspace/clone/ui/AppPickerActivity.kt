@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.niunaijun.blackbox.BlackBoxCore
+import com.dualspace.clone.util.FailureText
 
 /** Lists every launchable app on the phone; tapping one creates a new clone of it. */
 class AppPickerActivity : AppCompatActivity() {
@@ -87,7 +88,10 @@ class AppPickerActivity : AppCompatActivity() {
             .setCancelable(false)
             .show()
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { CloneManager.createClone(this@AppPickerActivity, app.packageName) }
+            val result = withContext(Dispatchers.IO) {
+                runCatching { CloneManager.createClone(this@AppPickerActivity, app.packageName) }
+                    .getOrElse { CloneManager.Result.Error(FailureText.describe(it)) }
+            }
             dlg.dismiss()
             when (result) {
                 is CloneManager.Result.Ok -> {

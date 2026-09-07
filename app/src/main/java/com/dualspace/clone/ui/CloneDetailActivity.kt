@@ -28,6 +28,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import android.widget.Toast
+import com.dualspace.clone.util.FailureText
 
 /** Per-clone management: rename, icon, freeze, hide, lock, shortcut, clear data, delete. */
 class CloneDetailActivity : AppCompatActivity() {
@@ -44,7 +46,17 @@ class CloneDetailActivity : AppCompatActivity() {
 
         clone = CloneStore.byId(intent.getStringExtra(EXTRA_ID) ?: "") ?: run { finish(); return }
 
-        b.btnOpen.setOnClickListener { lifecycleScope.launch(Dispatchers.IO) { CloneManager.launch(clone) } }
+        b.btnOpen.setOnClickListener {
+            lifecycleScope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { CloneManager.launch(clone) }
+                        .getOrElse { CloneManager.LaunchResult.Failed(FailureText.describe(it)) }
+                }
+                if (result is CloneManager.LaunchResult.Failed) {
+                    Toast.makeText(this@CloneDetailActivity, getString(R.string.msg_launch_failed_reason, result.reason), Toast.LENGTH_LONG).show()
+                }
+            }
+        }
         b.btnRename.setOnClickListener { rename() }
         b.btnIcon.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), REQ_ICON)

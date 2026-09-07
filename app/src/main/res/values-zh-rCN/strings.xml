@@ -17,6 +17,8 @@
     <string name="action_open">打开</string>
     <string name="msg_clone_created">“%s”已就绪</string>
     <string name="msg_launch_failed">无法打开此分身，请重试或清除其数据。</string>
+    <string name="msg_launch_failed_reason">无法打开此分身。\n%s</string>
+    <string name="action_details">详情</string>
     <string name="msg_frozen">此分身已冻结。</string>
     <string name="action_unfreeze">解冻</string>
     <string name="msg_clone_missing">此分身已不存在。</string>
