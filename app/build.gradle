@@ -120,6 +120,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 
     testImplementation libs.junit
+    // Local JVM unit tests run against the Android stub jar, whose org.json classes
+    // throw RuntimeException("Stub!") for every real method. Clone.toJson/fromJson need
+    // actual JSON parsing, so pull in the reference implementation for the test classpath only.
+    testImplementation 'org.json:json:20240303'
     androidTestImplementation libs.ext.junit
     androidTestImplementation 'androidx.test:runner:1.6.2'
 }
