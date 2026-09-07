@@ -2,6 +2,7 @@ package top.niunaijun.blackbox.core.system;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,23 +21,15 @@ import top.niunaijun.blackbox.core.system.notification.BNotificationManagerServi
 import top.niunaijun.blackbox.core.system.os.BStorageManagerService;
 import top.niunaijun.blackbox.core.system.pm.BPackageInstallerService;
 import top.niunaijun.blackbox.core.system.pm.BPackageManagerService;
-import top.niunaijun.blackbox.core.system.pm.BXposedManagerService;
+
 import top.niunaijun.blackbox.core.system.user.BUserHandle;
 import top.niunaijun.blackbox.core.system.user.BUserManagerService;
 import top.niunaijun.blackbox.entity.pm.InstallOption;
 import top.niunaijun.blackbox.utils.FileUtils;
 
-import static top.niunaijun.blackbox.core.env.BEnvironment.EMPTY_JAR;
-import static top.niunaijun.blackbox.core.env.BEnvironment.JUNIT_JAR;
+import top.niunaijun.blackbox.core.system.JarManager;
 
-/**
- * Created by Milk on 4/22/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class BlackBoxSystem {
     private static BlackBoxSystem sBlackBoxSystem;
     private final List<ISystemService> mServices = new ArrayList<>();
@@ -64,7 +57,7 @@ public class BlackBoxSystem {
         mServices.add(BJobManagerService.get());
         mServices.add(BStorageManagerService.get());
         mServices.add(BPackageInstallerService.get());
-        mServices.add(BXposedManagerService.get());
+
         mServices.add(BProcessManagerService.get());
         mServices.add(BAccountManagerService.get());
         mServices.add(BLocationManagerService.get());
@@ -84,18 +77,10 @@ public class BlackBoxSystem {
             } catch (PackageManager.NameNotFoundException ignored) {
             }
         }
-        initJarEnv();
-    }
-
-    private void initJarEnv() {
-        try {
-            InputStream junit = BlackBoxCore.getContext().getAssets().open("junit.jar");
-            FileUtils.copyFile(junit, JUNIT_JAR);
-
-            InputStream empty = BlackBoxCore.getContext().getAssets().open("empty.jar");
-            FileUtils.copyFile(empty, EMPTY_JAR);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        
+        JarManager.getInstance().initializeAsync();
+        
+        
+     
     }
 }

@@ -45,8 +45,16 @@ public class ContentProviderCompat {
         ContentProviderClient client = acquireContentProviderClient(context, uri);
         if (client == null) {
             int retry = 0;
+            long startTime = System.currentTimeMillis();
+            long timeout = 2000; 
+            
             while (retry < retryCount && client == null) {
-                SystemClock.sleep(400);
+                
+                if (System.currentTimeMillis() - startTime > timeout) {
+                    break;
+                }
+                
+                SystemClock.sleep(200); 
                 retry++;
                 client = acquireContentProviderClient(context, uri);
             }
@@ -58,8 +66,16 @@ public class ContentProviderCompat {
         ContentProviderClient client = acquireContentProviderClient(context, name);
         if (client == null) {
             int retry = 0;
+            long startTime = System.currentTimeMillis();
+            long timeout = 2000; 
+            
             while (retry < retryCount && client == null) {
-                SystemClock.sleep(400);
+                
+                if (System.currentTimeMillis() - startTime > timeout) {
+                    break;
+                }
+                
+                SystemClock.sleep(200); 
                 retry++;
                 client = acquireContentProviderClient(context, name);
             }

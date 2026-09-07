@@ -30,14 +30,7 @@ import top.niunaijun.blackbox.utils.Slog;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 
-/**
- * Created by Milk on 3/31/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class BActivityManagerService extends IBActivityManagerService.Stub implements ISystemService {
     public static final String TAG = "BActivityManagerService";
     private static final BActivityManagerService sService = new BActivityManagerService();
@@ -189,9 +182,7 @@ public class BActivityManagerService extends IBActivityManagerService.Stub imple
     @Override
     public RunningServiceInfo getRunningServices(String callerPackage, int userId) throws RemoteException {
         UserSpace userSpace = getOrCreateSpaceLocked(userId);
-        synchronized (userSpace.mActiveServices) {
-            return userSpace.mActiveServices.getRunningServiceInfo(callerPackage, userId);
-        }
+        return userSpace.mActiveServices.getRunningServiceInfo(callerPackage, userId);
     }
 
     @Override

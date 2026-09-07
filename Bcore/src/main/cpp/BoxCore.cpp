@@ -1,6 +1,6 @@
-//
-// Created by Milk on 4/9/21.
-//
+
+
+
 
 #include "BoxCore.h"
 #include "Log.h"
@@ -9,9 +9,12 @@
 #include <JniHook/JniHook.h>
 #include <Hook/VMClassLoaderHook.h>
 #include <Hook/UnixFileSystemHook.h>
+#include <Hook/FileSystemHook.h>
 #include <Hook/BinderHook.h>
+#include <Hook/DexFileHook.h>
 #include <Hook/RuntimeHook.h>
 #include "Utils/HexDump.h"
+#include "hidden_api.h"
 
 struct {
     JavaVM *vm;
@@ -70,9 +73,11 @@ JavaVM *BoxCore::getJavaVM() {
 void nativeHook(JNIEnv *env) {
     BaseHook::init(env);
     UnixFileSystemHook::init(env);
+    FileSystemHook::init();
     VMClassLoaderHook::init(env);
-//    RuntimeHook::init(env);
+
     BinderHook::init(env);
+    DexFileHook::init(env);
 }
 
 void hideXposed(JNIEnv *env, jclass clazz) {
@@ -97,16 +102,38 @@ void init(JNIEnv *env, jobject clazz, jint api_level) {
 
 void addIORule(JNIEnv *env, jclass clazz, jstring target_path,
                jstring relocate_path) {
+    ALOGD("set addIORule");
     IO::addRule(env->GetStringUTFChars(target_path, JNI_FALSE),
                 env->GetStringUTFChars(relocate_path, JNI_FALSE));
 }
 
 void enableIO(JNIEnv *env, jclass clazz) {
+    ALOGD("set enableIO");
     IO::init(env);
     nativeHook(env);
 }
 
+bool disableHiddenApi(JNIEnv *env, jclass clazz) {
+    ALOGD("set disableHiddenApi");
+    if(!disable_hidden_api(env)){
+        ALOGD("set disableHiddenApi Fail!!!");
+        return false;
+    }
+    return true;
+}
+
+bool disableResourceLoading(JNIEnv *env, jclass clazz) {
+    ALOGD("set disableResourceLoading");
+    if(!disable_resource_loading()){
+        ALOGD("set disableResourceLoading Fail!!!");
+        return false;
+    }
+    return true;
+}
+
 static JNINativeMethod gMethods[] = {
+        {"disableHiddenApi", "()Z",                               (void *) disableHiddenApi},
+        {"disableResourceLoading", "()Z",                         (void *) disableResourceLoading},
         {"hideXposed", "()V",                                     (void *) hideXposed},
         {"addIORule",  "(Ljava/lang/String;Ljava/lang/String;)V", (void *) addIORule},
         {"enableIO",   "()V",                                     (void *) enableIO},

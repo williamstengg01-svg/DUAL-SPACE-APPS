@@ -14,7 +14,7 @@ one ever appears in the dependency graph.
 | Path | What it is |
 |---|---|
 | `app/` | The Dual Space app (Kotlin, Material 3). Everything user-facing lives here. |
-| `Bcore/`, `android-mirror/` | The BlackBox virtualization engine (Apache 2.0) — the sandbox that actually runs the clones. |
+| `Bcore/`, `black-reflection/`, `compiler/` | The BlackBox virtualization engine, *NewBlackbox* edition with Android 13/14/15 support (Apache 2.0) — the sandbox that actually runs the clones. Its built-in remote log uploader has been removed. |
 | `.github/workflows/build.yml` | Builds signed arm64 + arm32 release APKs on every push. |
 | `docs/ARCHITECTURE.md` | How the virtualization layer and the GMS pre-linking work. |
 | `docs/SETUP_GUIDE.md` | The one-time per-brand setup (Samsung, Xiaomi/Redmi, Vivo, Oppo). |
@@ -39,8 +39,8 @@ build cannot update over it without uninstalling first.
 
 ## Building locally
 
-Requirements: JDK 11, Android SDK with platforms 30 + 33, build-tools 30.0.3,
-NDK 21.4.7075529 and CMake 3.18.1 (Android Studio's SDK Manager can install all of them).
+Requirements: JDK 21, Android SDK platform 35, build-tools 35.0.0 and NDK 29.0.13846066
+(Android Studio's SDK Manager can install all of them).
 
 ```
 ./gradlew assembleArm64Release        # or assembleArm64Debug
@@ -65,7 +65,15 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
 | 32-bit and 64-bit apps | `arm64` and `arm32` product flavors; picker warns when the other build is needed |
 | App lock (PIN / fingerprint) | `ui/LockActivity`, `ui/LockGate` |
 | Data survives reboot / update | Sandboxes live in app-private storage; `BootReceiver` re-syncs GMS |
+| Crash diagnostics | `util/CrashLog` records clone crashes on-device; *Settings → Diagnostics* shows/shares them |
 | EN / ID / ZH-CN | `res/values`, `res/values-in`, `res/values-zh-rCN` |
+
+## Changelog
+
+* **1.1.0** — switched to the maintained *NewBlackbox* engine (Android 13/14/15 support; fixes
+  clones that closed immediately on modern phones), added *Diagnostics* screen with on-device
+  crash log, added *Storage access* setup step, removed the engine's remote log uploader.
+* **1.0.0** — first release.
 
 ## Known limits (please read)
 

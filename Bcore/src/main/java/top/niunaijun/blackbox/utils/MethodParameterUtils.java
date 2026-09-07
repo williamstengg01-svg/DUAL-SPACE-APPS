@@ -26,7 +26,7 @@ public class MethodParameterUtils {
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof String) {
                 String value = (String) args[i];
-                if (BlackBoxCore.get().isInstalled(value, BActivityThread.getUserId())) {
+                if (BlackBoxCore.get().isInstalled(value, BlackBoxCore.getUserId())) {
                     args[i] = BlackBoxCore.getHostPkg();
                     return value;
                 }
@@ -44,7 +44,7 @@ public class MethodParameterUtils {
                 continue;
             if (args[i] instanceof String) {
                 String value = (String) args[i];
-                if (BlackBoxCore.get().isInstalled(value, BActivityThread.getUserId())) {
+                if (BlackBoxCore.get().isInstalled(value, BlackBoxCore.getUserId())) {
                     args[i] = BlackBoxCore.getHostPkg();
                 }
             }
@@ -57,7 +57,7 @@ public class MethodParameterUtils {
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof Integer) {
                 int uid = (int) args[i];
-                if (uid == BActivityThread.getBUid()) {
+                if (uid == BlackBoxCore.getBUid()) {
                     args[i] = BlackBoxCore.getHostUid();
                 }
             }
@@ -68,7 +68,7 @@ public class MethodParameterUtils {
         int index = ArrayUtils.indexOfLast(args, Integer.class);
         if (index != -1) {
             int uid = (int) args[index];
-            if (uid == BActivityThread.getBUid()) {
+            if (uid == BlackBoxCore.getBUid()) {
                 args[index] = BlackBoxCore.getHostUid();
             }
         }
@@ -78,7 +78,7 @@ public class MethodParameterUtils {
         int index = ArrayUtils.indexOfLast(args, String.class);
         if (index != -1) {
             String pkg = (String) args[index];
-            if (BlackBoxCore.get().isInstalled(pkg, BActivityThread.getUserId())) {
+            if (BlackBoxCore.get().isInstalled(pkg, BlackBoxCore.getUserId())) {
                 args[index] = BlackBoxCore.getHostPkg();
             }
             return pkg;
@@ -90,7 +90,7 @@ public class MethodParameterUtils {
         int index = ArrayUtils.indexOf(args, String.class, sequence);
         if (index != -1) {
             String pkg = (String) args[index];
-            if (BlackBoxCore.get().isInstalled(pkg, BActivityThread.getUserId())) {
+            if (BlackBoxCore.get().isInstalled(pkg, BlackBoxCore.getUserId())) {
                 args[index] = BlackBoxCore.getHostPkg();
             }
             return pkg;
@@ -144,5 +144,10 @@ public class MethodParameterUtils {
         }
     }
 
-
+    public static int toInt(Object obj){
+        if(obj instanceof Long){
+            return ((Long) obj).intValue();
+        }
+        return (int)obj;
+    }
 }

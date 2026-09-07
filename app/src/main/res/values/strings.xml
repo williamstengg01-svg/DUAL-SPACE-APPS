@@ -123,4 +123,12 @@
     <string name="pref_no_ads">No ads, no tracking</string>
     <string name="pref_no_ads_summary">Dual Space contains no advertising or analytics SDK. Clone data never leaves your phone.</string>
     <string name="about_text">Dual Space clones any installed app into an isolated sandbox with its own data, login and notifications. Clone an app as many times as you need.\n\nVirtualization engine: BlackBox (Apache 2.0).</string>
+    <string name="title_diagnostics">Diagnostics</string>
+    <string name="action_share">Share</string>
+    <string name="action_clear_logs">Clear logs</string>
+    <string name="diag_no_crashes">No crashes recorded. If a clone closes by itself, open it again, then come back here.</string>
+    <string name="pref_diagnostics">Diagnostics</string>
+    <string name="pref_diagnostics_summary">Device info and crash reports of clones (nothing is uploaded)</string>
+    <string name="step_storage_title">Storage access</string>
+    <string name="step_storage_desc">Allow “All files access” so clones can save and open photos, videos and downloads.</string>
 </resources>

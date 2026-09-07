@@ -22,14 +22,7 @@ import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 import top.niunaijun.blackbox.utils.MethodParameterUtils;
 
-/**
- * Created by Milk on 4/8/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ILocationManagerProxy extends BinderInvocationStub {
     public static final String TAG = "ILocationManagerProxy";
 
@@ -54,8 +47,21 @@ public class ILocationManagerProxy extends BinderInvocationStub {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-//        Log.d(TAG, "call: " + method.getName());
+
         MethodParameterUtils.replaceFirstAppPkg(args);
+        
+        
+        String packageName = BActivityThread.getAppPackageName();
+        if (packageName != null && packageName.equals("com.google.android.gms")) {
+            
+            if (method.getName().equals("getLastLocation") || 
+                method.getName().equals("getLastKnownLocation") ||
+                method.getName().equals("requestLocationUpdates")) {
+                Log.w(TAG, "Blocking location request from Google Play Services to prevent crash");
+                return null;
+            }
+        }
+        
         return super.invoke(proxy, method, args);
     }
 
@@ -64,7 +70,7 @@ public class ILocationManagerProxy extends BinderInvocationStub {
 
         @Override
         protected Object hook(Object who, Method method, Object[] args) throws Throwable {
-            // todo
+            
             return true;
         }
     }
@@ -77,7 +83,17 @@ public class ILocationManagerProxy extends BinderInvocationStub {
             if (BLocationManager.isFakeLocationEnable()) {
                 return BLocationManager.get().getLocation(BActivityThread.getUserId(), BActivityThread.getAppPackageName()).convert2SystemLocation();
             }
-            return method.invoke(who, args);
+            
+            
+            try {
+                return method.invoke(who, args);
+            } catch (Exception e) {
+                if (e.getCause() instanceof SecurityException) {
+                    Log.w(TAG, "Location permission denied, returning null for getLastLocation");
+                    return null;
+                }
+                throw e;
+            }
         }
     }
 
@@ -89,7 +105,17 @@ public class ILocationManagerProxy extends BinderInvocationStub {
             if (BLocationManager.isFakeLocationEnable()) {
                 return BLocationManager.get().getLocation(BActivityThread.getUserId(), BActivityThread.getAppPackageName()).convert2SystemLocation();
             }
-            return method.invoke(who, args);
+            
+            
+            try {
+                return method.invoke(who, args);
+            } catch (Exception e) {
+                if (e.getCause() instanceof SecurityException) {
+                    Log.w(TAG, "Location permission denied, returning null for getLastKnownLocation");
+                    return null;
+                }
+                throw e;
+            }
         }
     }
 
@@ -105,7 +131,17 @@ public class ILocationManagerProxy extends BinderInvocationStub {
                     return 0;
                 }
             }
-            return method.invoke(who, args);
+            
+            
+            try {
+                return method.invoke(who, args);
+            } catch (Exception e) {
+                if (e.getCause() instanceof SecurityException) {
+                    Log.w(TAG, "Location permission denied for requestLocationUpdates, returning 0");
+                    return 0;
+                }
+                throw e;
+            }
         }
     }
 
@@ -144,7 +180,7 @@ public class ILocationManagerProxy extends BinderInvocationStub {
 
         @Override
         protected Object hook(Object who, Method method, Object[] args) throws Throwable {
-            // todo
+            
             return 0;
         }
     }

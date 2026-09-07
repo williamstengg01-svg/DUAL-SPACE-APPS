@@ -12,14 +12,7 @@ import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 import top.niunaijun.blackbox.utils.MethodParameterUtils;
 
-/**
- * Created by Milk on 2021/5/17.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class IDevicePolicyManagerProxy extends BinderInvocationStub {
     public IDevicePolicyManagerProxy() {
         super(BRServiceManager.get().getService(Context.DEVICE_POLICY_SERVICE));

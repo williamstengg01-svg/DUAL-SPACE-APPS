@@ -38,6 +38,11 @@
             android:summary="@string/pref_setup_summary"
             app:iconSpaceReserved="false" />
         <Preference
+            android:key="diagnostics"
+            android:title="@string/pref_diagnostics"
+            android:summary="@string/pref_diagnostics_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
             android:key="gms"
             android:title="@string/pref_gms"
             app:iconSpaceReserved="false" />

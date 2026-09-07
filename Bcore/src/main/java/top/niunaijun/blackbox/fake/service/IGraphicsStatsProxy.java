@@ -9,14 +9,7 @@ import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 import top.niunaijun.blackbox.utils.MethodParameterUtils;
 
-/**
- * Created by Milk on 4/13/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class IGraphicsStatsProxy extends BinderInvocationStub {
 
     public IGraphicsStatsProxy() {

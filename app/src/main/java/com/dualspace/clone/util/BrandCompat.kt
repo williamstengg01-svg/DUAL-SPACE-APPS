@@ -1,14 +1,18 @@
 package com.dualspace.clone.util
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import com.dualspace.clone.R
 
 /**
@@ -63,7 +67,21 @@ object BrandCompat {
             )
         )
 
-        // 2. Autostart / background start permission — OEM specific.
+        // 2. Shared-storage access, so clones can read/write photos, downloads and media.
+        //    On Android 11+ this is the "All files access" special permission; on older
+        //    versions the wizard asks for the classic storage runtime permission instead.
+        list += Step(
+            key = "storage",
+            title = R.string.step_storage_title,
+            description = R.string.step_storage_desc,
+            candidates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) listOf(
+                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$pkg")),
+                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            ) else emptyList(),
+            required = false
+        )
+
+        // 3. Autostart / background start permission — OEM specific.
         when (brand) {
             Brand.XIAOMI -> list += Step(
                 "autostart", R.string.step_autostart_title, R.string.step_autostart_desc_xiaomi,
@@ -180,6 +198,10 @@ object BrandCompat {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return runCatching { context.startActivity(fallback); true }.getOrDefault(false)
     }
+
+    fun hasStorageAccess(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager()
+        else ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
     @SuppressLint("BatteryLife")
     fun isIgnoringBatteryOptimizations(context: Context): Boolean {

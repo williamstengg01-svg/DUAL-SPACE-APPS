@@ -65,6 +65,10 @@ class SettingsActivity : AppCompatActivity() {
                 startActivity(Intent(requireContext(), SetupWizardActivity::class.java)); true
             }
 
+            findPreference<Preference>("diagnostics")!!.setOnPreferenceClickListener {
+                startActivity(Intent(requireContext(), DiagnosticsActivity::class.java)); true
+            }
+
             findPreference<Preference>("gms")!!.summary = getString(
                 if (GmsLinker.isSupported()) R.string.pref_gms_summary_ok else R.string.pref_gms_summary_none)
 

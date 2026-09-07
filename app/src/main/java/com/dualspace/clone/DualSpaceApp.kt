@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.dualspace.clone.data.CloneStore
 import com.dualspace.clone.data.GmsLinker
+import com.dualspace.clone.util.CrashLog
 import com.dualspace.clone.util.Prefs
 import com.google.android.material.color.DynamicColors
 import kotlinx.coroutines.CoroutineScope
@@ -38,9 +39,12 @@ class DualSpaceApp : Application() {
                 override fun isEnableDaemonService(): Boolean = true
 
                 override fun isHideRoot(): Boolean = false
-                override fun isHideXposed(): Boolean = true
 
-                override fun requestInstallPackage(file: File?): Boolean = false
+                // A clone asked to install another APK — we do not handle that.
+                override fun requestInstallPackage(file: File?, userId: Int): Boolean = false
+
+                // Never send logs anywhere. Returning null keeps the engine's log uploader off.
+                override fun getLogSenderChatId(): String? = null
             })
         } catch (e: Exception) {
             Log.e(TAG, "Engine attach failed", e)
@@ -50,6 +54,7 @@ class DualSpaceApp : Application() {
     override fun onCreate() {
         super.onCreate()
         BlackBoxCore.get().doCreate()
+        CrashLog.install(this)
 
         if (!BlackBoxCore.get().isMainProcess) return
 

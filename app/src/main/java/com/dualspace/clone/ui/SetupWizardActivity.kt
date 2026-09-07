@@ -1,11 +1,14 @@
 package com.dualspace.clone.ui
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dualspace.clone.R
@@ -51,6 +54,7 @@ class SetupWizardActivity : AppCompatActivity() {
         super.onResume()
         // Auto-verify the one step Android lets us query.
         if (BrandCompat.isIgnoringBatteryOptimizations(this)) Prefs.setStepDone("battery", true)
+        if (BrandCompat.hasStorageAccess(this)) Prefs.setStepDone("storage", true)
         adapter.notifyDataSetChanged()
         updateDone()
     }
@@ -75,7 +79,12 @@ class SetupWizardActivity : AppCompatActivity() {
                 b.check.setOnCheckedChangeListener(null)
                 b.check.isChecked = Prefs.isStepDone(step.key)
                 b.check.setOnCheckedChangeListener { _, on -> Prefs.setStepDone(step.key, on); updateDone() }
-                b.btnOpen.setOnClickListener { BrandCompat.open(b.root.context, step) }
+                b.btnOpen.setOnClickListener {
+                    if (step.key == "storage" && Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                        ActivityCompat.requestPermissions(this@SetupWizardActivity,
+                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+                    } else BrandCompat.open(b.root.context, step)
+                }
             }
         }
     }

@@ -43,14 +43,8 @@ import top.niunaijun.blackbox.utils.compat.ActivityManagerCompat;
 
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
 
-/**
- * Created by Milk on 4/5/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
+@SuppressWarnings({"deprecation", "unchecked"})
 public class ActivityStack {
     public static final String TAG = "ActivityStack";
 
@@ -143,11 +137,11 @@ public class ActivityStack {
                 break;
         }
 
-        // 如果还没有task则新启动一个task
+        
         if (taskRecord == null || taskRecord.needNewTask()) {
             return startActivityInNewTaskLocked(userId, intent, activityInfo, resultTo, launchModeFlags);
         }
-        // 移至前台
+        
         mAms.moveTaskToFront(taskRecord.id, 0);
 
         boolean notStartToFront = false;
@@ -169,7 +163,7 @@ public class ActivityStack {
 
         if (clearTop) {
             if (targetActivityRecord != null) {
-                // 目标栈上面所有activity出栈
+                
                 synchronized (targetActivityRecord.task.activities) {
                     for (int i = targetActivityRecord.task.activities.size() - 1; i >= 0; i--) {
                         ActivityRecord next = targetActivityRecord.task.activities.get(i);
@@ -180,7 +174,7 @@ public class ActivityStack {
                             if (singleTop) {
                                 newIntentRecord = targetActivityRecord;
                             } else {
-                                // clearTop并且不是singleTop，目标也finish，重建。
+                                
                                 targetActivityRecord.finished = true;
                             }
                             break;
@@ -197,7 +191,7 @@ public class ActivityStack {
                 synchronized (mLaunchingActivities) {
                     for (ActivityRecord launchingActivity : mLaunchingActivities) {
                         if (!launchingActivity.finished && launchingActivity.component.equals(intent.getComponent())) {
-                            // todo update onNewIntent from intent
+                            
                             ignore = true;
                         }
                     }
@@ -211,9 +205,9 @@ public class ActivityStack {
             } else {
                 ActivityRecord record = findActivityRecordByComponentName(userId, ComponentUtils.toComponentName(activityInfo));
                 if (record != null) {
-                    // 需要调用目标onNewIntent
+                    
                     newIntentRecord = record;
-                    // 目标栈上面所有activity出栈
+                    
                     synchronized (taskRecord.activities) {
                         for (int i = taskRecord.activities.size() - 1; i >= 0; i--) {
                             ActivityRecord next = taskRecord.activities.get(i);
@@ -232,17 +226,17 @@ public class ActivityStack {
             newIntentRecord = topActivityRecord;
         }
 
-        // clearTask finish All
+        
         if (clearTask && newTask) {
             for (ActivityRecord activity : taskRecord.activities) {
                 activity.finished = true;
             }
+            finishAllActivity(userId);
         }
-
-        finishAllActivity(userId);
+        
 
         if (newIntentRecord != null) {
-            // 通知onNewIntent
+            
             deliverNewIntentLocked(newIntentRecord, intent);
             return 0;
         } else if (ignore) {
@@ -542,6 +536,7 @@ public class ActivityStack {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void synchronizeTasks() {
         List<ActivityManager.RecentTaskInfo> recentTasks = mAms.getRecentTasks(100, 0);
         Map<Integer, TaskRecord> newTacks = new LinkedHashMap<>();

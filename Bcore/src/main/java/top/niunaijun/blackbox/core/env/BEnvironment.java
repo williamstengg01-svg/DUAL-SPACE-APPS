@@ -7,14 +7,7 @@ import top.niunaijun.blackbox.BlackBoxCore;
 import top.niunaijun.blackbox.app.BActivityThread;
 import top.niunaijun.blackbox.utils.FileUtils;
 
-/**
- * Created by Milk on 4/22/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class BEnvironment {
     private static final File sVirtualRoot = new File(BlackBoxCore.getContext().getCacheDir().getParent(), "blackbox");
     private static final File sExternalVirtualRoot = BlackBoxCore.getContext().getExternalFilesDir("blackbox");
@@ -86,6 +79,11 @@ public class BEnvironment {
         return new File(sVirtualRoot, String.format(Locale.CHINA, "data/user/%d", userId));
     }
 
+    public static File getExternalObbDir(String packageName, int userId) {
+        return new File(getExternalUserDir(userId), String.format(Locale.CHINA, "Android/obb/%s", packageName));
+    }
+
+
     public static File getDeDataDir(String packageName, int userId) {
         return new File(sVirtualRoot, String.format(Locale.CHINA, "data/user_de/%d/%s", userId, packageName));
     }
@@ -146,6 +144,6 @@ public class BEnvironment {
     }
 
     public static File getXSharedPreferences(String packageName, String prefFileName) {
-       return new File(BEnvironment.getDataDir(packageName, BActivityThread.getUserId()), "shared_prefs/" + prefFileName + ".xml");
+       return new File(BEnvironment.getDataDir(packageName, BlackBoxCore.getUserId()), "shared_prefs/" + prefFileName + ".xml");
     }
 }

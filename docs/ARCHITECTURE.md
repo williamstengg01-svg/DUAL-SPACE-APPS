@@ -8,7 +8,7 @@
 │  MainActivity · AppPicker · CloneDetail · SetupWizard · Lock │
 │  CloneStore (registry) · CloneManager (façade) · GmsLinker   │
 ├──────────────────────────────────────────────────────────────┤
-│  Bcore/ + android-mirror/  — BlackBox virtualization engine  │
+│  Bcore/ (+ black-reflection, compiler) — NewBlackbox engine   │
 │  BlackBoxCore → BPackageManager / BActivityManager / …       │
 │  Proxy Activities/Services/Providers (:p0 … :p49 processes)  │
 │  Hooks on ActivityManager, PackageManager, ContentProvider,  │
@@ -111,6 +111,9 @@ corrupting sandbox state). Uninstalling Dual Space removes all clones.
 
 ## 7. Privacy
 
-No network code exists in `app/`. The engine only talks to the local system. There is no
+No network code exists in `app/`. The engine only talks to the local system — the upstream
+engine shipped a crash-log uploader that posted logcat to a third-party server by default;
+in Dual Space that class is stubbed out and the configuration returns no upload target, so
+crash logs stay on the device (`CrashLog`, visible under Settings → Diagnostics). There is no
 crash reporter, analytics, or advertising SDK; the CI workflow greps the resolved
 dependency graph for known ad/analytics artifacts and fails the build if any appear.

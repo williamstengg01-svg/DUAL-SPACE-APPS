@@ -1,26 +1,29 @@
 plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    ndkVersion rootProject.ext.ndkVersion
+    namespace 'com.dualspace.clone'
+    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion = "29.0.13846066"
 
     defaultConfig {
         applicationId "com.dualspace.clone"
-        minSdkVersion 26
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode rootProject.ext.versionCode
-        versionName rootProject.ext.versionName
+        minSdk 26
+        // targetSdk stays at 28 on purpose: app virtualization relies on behaviour that
+        // Android restricts for apps targeting 29+ (background activity starts,
+        // non-SDK interface access). Same value the engine itself uses.
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 2
+        versionName "1.1.0"
 
         vectorDrawables.useSupportLibrary = true
-        resConfigs "en", "in", "zh-rCN"
+        resourceConfigurations += ["en", "in", "zh-rCN"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    flavorDimensions "abi"
+    flavorDimensions += "abi"
 
     // A virtual app runs *inside* the host process, so the host ABI must match the
     // cloned app's native libraries. arm64 is the main build; arm32 is the companion
@@ -61,7 +64,7 @@ android {
             minifyEnabled false
         }
         release {
-            // The engine relies heavily on reflection; keep shrinking off.
+            // The engine relies heavily on reflection; keep shrinking off for the host app.
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -73,18 +76,25 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '21'
     }
 
-    packagingOptions {
-        jniLibs { useLegacyPackaging = true }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+            excludes.add("**/libandroidx.graphics.path.so")
+        }
+        resources {
+            excludes.add("**/libandroidx.graphics.path.so")
+        }
     }
 
     lint {
@@ -97,24 +107,19 @@ dependencies {
     implementation project(':Bcore')
 
     // Only AndroidX + Material. No advertising, analytics or tracking SDKs — by design.
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.recyclerview:recyclerview:1.3.0'
-    implementation 'androidx.activity:activity-ktx:1.7.2'
-    implementation 'androidx.fragment:fragment-ktx:1.6.0'
-    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation libs.core.ktx
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.constraintlayout
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.fragment:fragment-ktx:1.8.5'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.biometric:biometric:1.1.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 
-    testImplementation 'junit:junit:4.13.2'
-    // Local JVM unit tests run against the Android stub jar, whose org.json classes
-    // throw RuntimeException("Stub!") for every real method. Clone.toJson/fromJson
-    // (app/src/main/java/com/dualspace/clone/model/Clone.kt) need actual JSON parsing,
-    // so pull in the real reference implementation for the test classpath only.
-    testImplementation 'org.json:json:20240303'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation 'androidx.test:runner:1.6.2'
 }

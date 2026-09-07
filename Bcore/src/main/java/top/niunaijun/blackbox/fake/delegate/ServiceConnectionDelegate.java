@@ -12,14 +12,7 @@ import java.util.Map;
 import black.android.app.BRIServiceConnectionO;
 import top.niunaijun.blackbox.utils.compat.BuildCompat;
 
-/**
- * Created by Milk on 4/2/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ServiceConnectionDelegate extends IServiceConnection.Stub {
     private static final Map<IBinder, ServiceConnectionDelegate> sServiceConnectDelegate = new HashMap<>();
     private final IServiceConnection mConn;

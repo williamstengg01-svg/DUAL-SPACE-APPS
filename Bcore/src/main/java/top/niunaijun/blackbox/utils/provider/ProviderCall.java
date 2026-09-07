@@ -10,14 +10,7 @@ import java.io.Serializable;
 import top.niunaijun.blackbox.BlackBoxCore;
 import top.niunaijun.blackbox.utils.compat.ContentProviderCompat;
 
-/**
- * Created by Milk on 4/1/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ProviderCall {
     public static Bundle callSafely(String authority, String methodName, String arg, Bundle bundle) {
         try {

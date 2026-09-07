@@ -6,18 +6,12 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 
+import top.niunaijun.blackbox.BlackBoxCore;
 import top.niunaijun.blackbox.app.BActivityThread;
 import top.niunaijun.blackbox.proxy.record.ProxyPendingRecord;
 import top.niunaijun.blackbox.utils.Slog;
 
-/**
- * Created by Milk on 3/28/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ProxyPendingActivity extends Activity {
     public static final String TAG = "ProxyPendingActivity";
 
@@ -30,7 +24,7 @@ public class ProxyPendingActivity extends Activity {
         if (pendingActivityRecord.mTarget == null)
             return;
         pendingActivityRecord.mTarget.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        pendingActivityRecord.mTarget.setExtrasClassLoader(BActivityThread.getApplication().getClassLoader());
+        pendingActivityRecord.mTarget.setExtrasClassLoader(BlackBoxCore.getApplication().getClassLoader());
         startActivity(pendingActivityRecord.mTarget);
     }
 

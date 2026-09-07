@@ -11,14 +11,7 @@ import top.niunaijun.blackbox.BlackBoxCore;
 import top.niunaijun.blackbox.app.BActivityThread;
 import top.niunaijun.blackbox.entity.JobRecord;
 
-/**
- * Created by Milk on 4/1/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class AppJobServiceDispatcher {
     private static final AppJobServiceDispatcher sServiceDispatcher = new AppJobServiceDispatcher();
     private final Map<Integer, JobRecord> mJobRecords = new HashMap<>();
@@ -60,11 +53,11 @@ public class AppJobServiceDispatcher {
     }
 
     public void onDestroy() {
-//        for (JobRecord jobRecord : mJobRecords.values()) {
-//            if (jobRecord.mJobService != null) {
-//                jobRecord.mJobService.onDestroy();
-//            }
-//        }
+
+
+
+
+
     }
 
     public void onLowMemory() {
@@ -90,8 +83,8 @@ public class AppJobServiceDispatcher {
                 return jobRecord.mJobService;
             }
             try {
-                JobRecord record = BlackBoxCore.getBJobManager().queryJobRecord(BActivityThread.getAppProcessName(), jobId);
-                record.mJobService = BActivityThread.currentActivityThread().createJobService(record.mServiceInfo);
+                JobRecord record = BlackBoxCore.getBJobManager().queryJobRecord(BlackBoxCore.getAppProcessName(), jobId);
+                record.mJobService = BlackBoxCore.currentActivityThread().createJobService(record.mServiceInfo);
                 if (record.mJobService == null)
                     return null;
                 mJobRecords.put(jobId, record);

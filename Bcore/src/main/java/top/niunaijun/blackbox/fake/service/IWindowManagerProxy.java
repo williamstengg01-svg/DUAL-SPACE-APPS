@@ -11,14 +11,7 @@ import top.niunaijun.blackbox.fake.hook.BinderInvocationStub;
 import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 
-/**
- * Created by Milk on 4/6/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class IWindowManagerProxy extends BinderInvocationStub {
     public static final String TAG = "WindowManagerStub";
 

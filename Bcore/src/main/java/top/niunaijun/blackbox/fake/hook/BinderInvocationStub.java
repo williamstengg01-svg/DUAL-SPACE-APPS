@@ -13,14 +13,7 @@ import java.util.Map;
 
 import black.android.os.BRServiceManager;
 
-/**
- * Created by Milk on 3/30/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public abstract class BinderInvocationStub extends ClassInvocationStub implements IBinder {
     private IBinder mBaseBinder;
 

@@ -113,4 +113,12 @@
     <string name="pref_no_ads">无广告，无追踪</string>
     <string name="pref_no_ads_summary">Dual Space 不包含任何广告或分析 SDK。分身数据不会离开您的手机。</string>
     <string name="about_text">Dual Space 将任意已安装应用克隆到独立沙盒中，拥有自己的数据、登录状态和通知。可按需无限次克隆。\n\n虚拟化引擎：BlackBox (Apache 2.0)。</string>
+    <string name="title_diagnostics">诊断</string>
+    <string name="action_share">分享</string>
+    <string name="action_clear_logs">清除日志</string>
+    <string name="diag_no_crashes">尚未记录到崩溃。如果分身自动关闭，请再打开一次，然后回到这里。</string>
+    <string name="pref_diagnostics">诊断</string>
+    <string name="pref_diagnostics_summary">设备信息和分身崩溃报告（不会上传任何内容）</string>
+    <string name="step_storage_title">存储访问</string>
+    <string name="step_storage_desc">允许“所有文件访问权限”，以便分身可以保存和打开照片、视频和下载文件。</string>
 </resources>

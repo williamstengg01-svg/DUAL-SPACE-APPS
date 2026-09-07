@@ -11,10 +11,9 @@ import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 import top.niunaijun.blackbox.fake.service.base.UidMethodProxy;
 import top.niunaijun.blackbox.utils.MethodParameterUtils;
+import top.niunaijun.blackbox.utils.Slog;
 
-/**
- * Created by BlackBox on 2022/3/5.
- */
+
 public class INetworkManagementServiceProxy extends BinderInvocationStub {
     public static final String NAME = "network_management";
 

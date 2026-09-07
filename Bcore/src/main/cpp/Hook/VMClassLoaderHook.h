@@ -1,6 +1,6 @@
-//
-// Created by Milk on 2021/5/5.
-//
+
+
+
 
 #ifndef BLACKBOX_VMCLASSLOADERHOOK_H
 #define BLACKBOX_VMCLASSLOADERHOOK_H
@@ -16,4 +16,4 @@ public:
 };
 
 
-#endif //BLACKBOX_VMCLASSLOADERHOOK_H
+#endif 

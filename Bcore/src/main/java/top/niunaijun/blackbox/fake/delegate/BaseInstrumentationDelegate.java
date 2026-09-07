@@ -57,7 +57,79 @@ public class BaseInstrumentationDelegate extends Instrumentation {
 
     @Override
     public void addResults(Bundle results) {
-        mBaseInstrumentation.addResults(results);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mBaseInstrumentation.addResults(results);
+        } else {
+            
+            try {
+                
+                if (results != null && !results.isEmpty()) {
+                    
+                    mBaseInstrumentation.sendStatus(0, results);
+                    
+                    
+                    storeResultsForOlderVersions(results);
+                    
+                    
+                    storeResultsInPreferences(results);
+                }
+            } catch (Exception e) {
+                android.util.Log.w("BaseInstrumentationDelegate", "Failed to handle results on older Android version: " + e.getMessage());
+            }
+        }
+    }
+    
+    
+    private void storeResultsForOlderVersions(Bundle results) {
+        try {
+            
+            Class<?> resultsStorageClass = Class.forName("top.niunaijun.blackbox.utils.ResultsStorage");
+            java.lang.reflect.Method storeMethod = resultsStorageClass.getMethod("storeResults", String.class, Bundle.class);
+            
+            
+            String resultKey = "results_" + System.currentTimeMillis() + "_" + android.os.Process.myPid();
+            storeMethod.invoke(null, resultKey, results);
+            
+            android.util.Log.d("BaseInstrumentationDelegate", "Stored results with key: " + resultKey);
+        } catch (Exception e) {
+            android.util.Log.w("BaseInstrumentationDelegate", "Failed to store results in static storage: " + e.getMessage());
+        }
+    }
+    
+    
+    private void storeResultsInPreferences(Bundle results) {
+        try {
+            Context context = getContext();
+            if (context != null) {
+                android.content.SharedPreferences prefs = context.getSharedPreferences("instrumentation_results", Context.MODE_PRIVATE);
+                android.content.SharedPreferences.Editor editor = prefs.edit();
+                
+                
+                for (String key : results.keySet()) {
+                    Object value = results.get(key);
+                    if (value instanceof String) {
+                        editor.putString(key, (String) value);
+                    } else if (value instanceof Integer) {
+                        editor.putInt(key, (Integer) value);
+                    } else if (value instanceof Boolean) {
+                        editor.putBoolean(key, (Boolean) value);
+                    } else if (value instanceof Long) {
+                        editor.putLong(key, (Long) value);
+                    } else if (value instanceof Float) {
+                        editor.putFloat(key, (Float) value);
+                    }
+                }
+                
+                
+                editor.putLong("timestamp", System.currentTimeMillis());
+                editor.putInt("pid", android.os.Process.myPid());
+                
+                editor.apply();
+                android.util.Log.d("BaseInstrumentationDelegate", "Stored results in SharedPreferences");
+            }
+        } catch (Exception e) {
+            android.util.Log.w("BaseInstrumentationDelegate", "Failed to store results in preferences: " + e.getMessage());
+        }
     }
 
     @Override

@@ -13,14 +13,7 @@ import top.niunaijun.blackbox.fake.hook.MethodHook;
 import top.niunaijun.blackbox.fake.hook.ProxyMethod;
 import top.niunaijun.blackbox.proxy.ProxyManifest;
 
-/**
- * Created by Milk on 4/8/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class IAutofillManagerProxy extends BinderInvocationStub {
     public static final String TAG = "AutofillManagerStub";
 
@@ -53,7 +46,7 @@ public class IAutofillManagerProxy extends BinderInvocationStub {
                     if (args[i] == null)
                         continue;
                     if (args[i] instanceof ComponentName) {
-                        args[i] = new ComponentName(BlackBoxCore.getHostPkg(), ProxyManifest.getProxyActivity(BActivityThread.getAppPid()));
+                        args[i] = new ComponentName(BlackBoxCore.getHostPkg(), ProxyManifest.getProxyActivity(BlackBoxCore.getAppPid()));
                     }
                 }
             }

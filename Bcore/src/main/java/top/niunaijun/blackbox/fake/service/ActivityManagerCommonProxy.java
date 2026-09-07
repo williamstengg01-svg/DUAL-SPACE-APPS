@@ -2,6 +2,7 @@ package top.niunaijun.blackbox.fake.service;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,14 +24,7 @@ import top.niunaijun.blackbox.utils.compat.StartActivityCompat;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 
-/**
- * Created by Milk on 4/21/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ActivityManagerCommonProxy {
     public static final String TAG = "CommonStub";
 
@@ -42,12 +36,33 @@ public class ActivityManagerCommonProxy {
             Intent intent = getIntent(args);
             Slog.d(TAG, "Hook in : " + intent);
             assert intent != null;
+            
+            
             if (intent.getParcelableExtra("_B_|_target_") != null) {
                 return method.invoke(who, args);
             }
             if (ComponentUtils.isRequestInstall(intent)) {
                 File file = FileProviderHandler.convertFile(BActivityThread.getApplication(), intent.getData());
-                if (BlackBoxCore.get().requestInstallPackage(file)) {
+                
+                
+                if (file != null && file.exists()) {
+                    try {
+                        PackageInfo packageInfo = BlackBoxCore.getPackageManager().getPackageArchiveInfo(file.getAbsolutePath(), 0);
+                        if (packageInfo != null) {
+                            String packageName = packageInfo.packageName;
+                            String hostPackageName = BlackBoxCore.getHostPkg();
+                            if (packageName.equals(hostPackageName)) {
+                                Slog.w(TAG, "Blocked attempt to install BlackBox app from within BlackBox: " + packageName);
+                                
+                                return 0;
+                            }
+                        }
+                    } catch (Exception e) {
+                        Slog.w(TAG, "Could not verify if this is BlackBox app: " + e.getMessage());
+                    }
+                }
+                
+                if (BlackBoxCore.get().requestInstallPackage(file, BActivityThread.getUserId())) {
                     return 0;
                 }
                 intent.setData(FileProviderHandler.convertFileUri(BActivityThread.getApplication(), intent.getData()));
@@ -123,7 +138,7 @@ public class ActivityManagerCommonProxy {
             String[] resolvedTypes = (String[]) args[index++];
             IBinder resultTo = (IBinder) args[index++];
             Bundle options = (Bundle) args[index];
-            // todo ??
+            
             if (!ComponentUtils.isSelf(intents)) {
                 return method.invoke(who, args);
             }

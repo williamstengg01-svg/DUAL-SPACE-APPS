@@ -113,4 +113,12 @@
     <string name="pref_no_ads">Tanpa iklan, tanpa pelacakan</string>
     <string name="pref_no_ads_summary">Dual Space tidak berisi SDK iklan atau analitik. Data klon tidak pernah keluar dari ponsel Anda.</string>
     <string name="about_text">Dual Space menggandakan aplikasi apa pun ke dalam sandbox terpisah dengan data, login, dan notifikasi sendiri. Gandakan aplikasi sebanyak yang Anda butuhkan.\n\nMesin virtualisasi: BlackBox (Apache 2.0).</string>
+    <string name="title_diagnostics">Diagnostik</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_clear_logs">Hapus log</string>
+    <string name="diag_no_crashes">Belum ada crash tercatat. Jika klon tertutup sendiri, buka lagi lalu kembali ke sini.</string>
+    <string name="pref_diagnostics">Diagnostik</string>
+    <string name="pref_diagnostics_summary">Info perangkat dan laporan crash klon (tidak ada yang diunggah)</string>
+    <string name="step_storage_title">Akses penyimpanan</string>
+    <string name="step_storage_desc">Izinkan “Akses semua file” agar klon bisa menyimpan dan membuka foto, video, dan unduhan.</string>
 </resources>

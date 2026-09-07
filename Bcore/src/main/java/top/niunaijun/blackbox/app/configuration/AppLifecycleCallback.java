@@ -3,20 +3,40 @@ package top.niunaijun.blackbox.app.configuration;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
-/**
- * Created by Milk on 5/5/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class AppLifecycleCallback implements Application.ActivityLifecycleCallbacks {
     public static AppLifecycleCallback EMPTY = new AppLifecycleCallback() {
 
     };
+
+    public void beforeMainLaunchApk(String packageName, int userid) {
+
+    }
+    
+    
+    public boolean onStoragePermissionNeeded(String packageName, int userId) {
+        
+        return false;
+    }
+
+    public void beforeMainApplicationAttach(Application app, Context context) {
+
+    }
+
+    public void afterMainApplicationAttach(Application app, Context context) {
+
+    }
+
+    public void beforeMainActivityOnCreate(Activity activity) {
+
+    }
+
+    public void afterMainActivityOnCreate(Activity activity) {
+
+    }
 
     public void beforeCreateApplication(String packageName, String processName, Context context, int userId) {
 

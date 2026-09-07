@@ -11,14 +11,7 @@ import top.niunaijun.blackbox.BlackBoxCore;
 import top.niunaijun.blackbox.app.BActivityThread;
 import top.niunaijun.blackbox.utils.compat.BuildCompat;
 
-/**
- * Created by Milk on 4/18/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class FileProviderHandler {
 
     public static Uri convertFileUri(Context context, Uri uri) {

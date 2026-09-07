@@ -9,14 +9,7 @@ import android.os.IBinder;
 import top.niunaijun.blackbox.core.system.ProcessRecord;
 
 
-/**
- * Created by Milk on 4/9/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class ActivityRecord extends Binder {
     public TaskRecord task;
     public IBinder token;

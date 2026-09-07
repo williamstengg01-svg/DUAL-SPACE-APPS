@@ -8,14 +8,7 @@ import top.niunaijun.blackbox.core.system.ServiceManager;
 import top.niunaijun.blackbox.core.system.am.IBJobManagerService;
 import top.niunaijun.blackbox.entity.JobRecord;
 
-/**
- * Created by Milk on 4/14/21.
- * * ∧＿∧
- * (`･ω･∥
- * 丶　つ０
- * しーＪ
- * 此处无Bug
- */
+
 public class BJobManager extends BlackManager<IBJobManagerService> {
     private static final BJobManager sJobManager = new BJobManager();
 
