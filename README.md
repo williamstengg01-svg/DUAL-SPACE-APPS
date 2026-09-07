@@ -68,8 +68,22 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
 | Crash diagnostics | `util/CrashLog` records clone crashes on-device; *Settings → Diagnostics* shows/shares them |
 | EN / ID / ZH-CN | `res/values`, `res/values-in`, `res/values-zh-rCN` |
 
+## Updating without uninstalling (clones survive)
+
+Android only installs a new APK over the old one when both are signed with the **same key**.
+Since 1.2.3 the GitHub build signs with a permanent release key stored in the repository
+secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, so every later
+build installs straight over the previous one and every clone, its login and its data stay
+in place. Builds made *before* 1.2.3 used a throw-away key, so upgrading from one of those
+needs a single last uninstall. Keep a backup of the key file (`keystore/README.md`): if it is
+ever lost, the next build cannot update the installed app and the phone will ask to uninstall
+again.
+
 ## Changelog
 
+* **1.2.3** — in-place updates. The workflow signs with a permanent release key (PKCS12 from
+  repository secrets; `storeType` now honoured in `keystore.properties`), and prints the
+  signing certificate in the build log so a mismatch can be spotted before installing.
 * **1.2.2** — fixes from the first field log (OPPO, Android 15).
   * Crash loop fixed: when Android restarted one of the engine's stub processes on its own
     (a client was still bound when it died), the new process had no idea which app it hosted

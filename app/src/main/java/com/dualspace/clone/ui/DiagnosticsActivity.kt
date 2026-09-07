@@ -66,8 +66,24 @@ class DiagnosticsActivity : AppCompatActivity() {
         render()
     }
 
+    /**
+     * SHA-256 of the certificate this build is signed with. Android only installs an update
+     * over an app signed with the *same* key, so this line tells whether the installed build
+     * can be updated in place (see keystore/README.md for the expected value).
+     */
+    private fun signingDigest(): String = try {
+        @Suppress("DEPRECATION")
+        val sigs = packageManager.getPackageInfo(packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
+        val cert = sigs?.firstOrNull()?.toByteArray()
+        if (cert == null) "unknown" else java.security.MessageDigest.getInstance("SHA-256")
+            .digest(cert).joinToString(":") { "%02X".format(it) }
+    } catch (t: Throwable) {
+        "unknown (${t.javaClass.simpleName})"
+    }
+
     private fun header(): String = buildString {
         appendLine("Dual Space ${BuildConfig.VERSION_NAME} (${if (BlackBoxCore.is64Bit()) "arm64" else "arm32"})")
+        appendLine("Signing key: ${signingDigest()}")
         appendLine("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${getString(BrandCompat.detect().label)}")
         appendLine("Clones: ${CloneStore.all().size} · battery-optimisation exempt: ${BrandCompat.isIgnoringBatteryOptimizations(this@DiagnosticsActivity)} · all-files access: ${BrandCompat.hasStorageAccess(this@DiagnosticsActivity)} · location for clones: ${BrandCompat.hasLocationAccess(this@DiagnosticsActivity)}")
     }

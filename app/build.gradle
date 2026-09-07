@@ -15,8 +15,8 @@ android {
         // Android restricts for apps targeting 29+ (background activity starts,
         // non-SDK interface access). Same value the engine itself uses.
         targetSdk rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.2.2"
+        versionCode 7
+        versionName "1.2.3"
 
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ["en", "in", "zh-rCN"]
@@ -51,6 +51,9 @@ android {
                 def props = new Properties()
                 propsFile.withInputStream { props.load(it) }
                 storeFile rootProject.file("keystore/" + props['storeFile'])
+                // PKCS12 is what both `keytool` (JDK 9+) and OpenSSL produce; a JKS file
+                // still loads through the JDK's compatibility mode.
+                storeType props['storeType'] ?: 'PKCS12'
                 storePassword props['storePassword']
                 keyAlias props['keyAlias']
                 keyPassword props['keyPassword']

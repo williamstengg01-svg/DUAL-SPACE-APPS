@@ -36,13 +36,17 @@ jobs:
         run: |
           mkdir -p keystore
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            # The permanent release key (PKCS12). Every build signed with it installs over
+            # the previous one, so clones and their data survive an update.
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore/dualspace.jks
             cat > keystore/keystore.properties <<EOF
           storeFile=dualspace.jks
+          storeType=PKCS12
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
           EOF
+            echo "Signing with the permanent release key from repository secrets."
           else
             # No secrets configured: generate a throw-away key so the release APK is still installable.
             keytool -genkeypair -v -keystore keystore/dualspace.jks -alias dualspace \
@@ -50,6 +54,7 @@ jobs:
               -dname "CN=Dual Space, O=DualSpace, C=ID"
             cat > keystore/keystore.properties <<EOF
           storeFile=dualspace.jks
+          storeType=PKCS12
           storePassword=dualspace
           keyAlias=dualspace
           keyPassword=dualspace
@@ -61,6 +66,13 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
+
+      - name: Print signing certificate (compare with keystore/README.md)
+        run: |
+          for apk in app/build/outputs/apk/arm64/release/*.apk app/build/outputs/apk/arm32/release/*.apk; do
+            echo "== $apk"
+            "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$apk" | grep -i "SHA-256\|Subject" || true
+          done
 
       - name: Verify no ad / analytics SDKs in the dependency graph
         run: |
