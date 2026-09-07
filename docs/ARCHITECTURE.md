@@ -117,3 +117,22 @@ in Dual Space that class is stubbed out and the configuration returns no upload 
 crash logs stay on the device (`CrashLog`, visible under Settings → Diagnostics). There is no
 crash reporter, analytics, or advertising SDK; the CI workflow greps the resolved
 dependency graph for known ad/analytics artifacts and fails the build if any appear.
+
+## 8. Logging and crash policy (1.2.0)
+
+* `util/DsLog` is the single log file (`files/logs/dualspace.log`, 1 MB, rotated once). It is
+  initialised in `Application.attachBaseContext` *before* the engine class is loaded and is
+  registered as the engine's `Slog.Sink`, so engine warnings/errors from every process land
+  in the same file, prefixed with the process (`main`, `black`, `p3`) and — inside a clone
+  process — the clone package and slot.
+* `util/CrashLog` is the last uncaught-exception handler in every process. The engine's own
+  "crash prevention" handlers return without killing the process; on the main thread that
+  leaves a dead looper and a frozen UI, which Android reports as "isn't responding". CrashLog
+  therefore captures the *system* handler before the engine replaces it and, for main-thread
+  crashes, delegates to it (clean process death, crash dialog, relaunch). Background-thread
+  exceptions still go through the engine chain, which may recover them.
+* `util/AnrWatchdog` posts a tick to the main looper every 2 s; if a tick is not processed
+  within 5 s (checked twice) the main thread's stack is written to the log and to a report.
+* `data/GmsLinker` publishes a `Status` (phone has GMS, engine reachable, per-slot linked)
+  that drives the green/red indicators. All engine calls stay on `Dispatchers.IO`; the UI
+  reads the cached status only.

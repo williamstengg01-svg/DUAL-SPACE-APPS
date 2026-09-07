@@ -123,4 +123,33 @@
     <string name="pref_diagnostics_summary">Info perangkat dan laporan crash klon (tidak ada yang diunggah)</string>
     <string name="step_storage_title">Akses penyimpanan</string>
     <string name="step_storage_desc">Izinkan “Akses semua file” agar klon bisa menyimpan dan membuka foto, video, dan unduhan.</string>
+
+    <string name="gms_status_connected">Google Play Services: terhubung</string>
+    <string name="gms_status_disconnected">Google Play Services: terputus</string>
+    <string name="gms_status_checking">Google Play Services: memeriksa…</string>
+    <string name="gms_reason_no_host">Tidak terpasang di ponsel ini</string>
+    <string name="gms_reason_engine">Mesin belum berjalan — ketuk Perbaiki</string>
+    <string name="gms_reason_unlinked">Belum terhubung di %d klon — ketuk Perbaiki</string>
+    <string name="gms_not_linked">Google Play Services: belum terhubung — ketuk untuk memperbaiki</string>
+    <string name="action_fix">Perbaiki</string>
+    <string name="msg_gms_repairing">Menghubungkan ulang Google Play Services…</string>
+    <string name="msg_gms_repaired">Google Play Services terhubung di semua klon</string>
+    <string name="msg_gms_repair_failed">Google Play Services tidak dapat dihubungkan. Lihat Diagnostik.</string>
+    <string name="msg_cloning_app">Menggandakan %s…</string>
+    <string name="clone_step_preparing">Menyiapkan slot sandbox…</string>
+    <string name="clone_step_gms">Menghubungkan Google Play Services…</string>
+    <string name="clone_step_installing">Memasang aplikasi ke dalam sandbox…</string>
+    <string name="clone_step_finishing">Menyelesaikan…</string>
+    <string name="clone_step_done">Selesai</string>
+    <string name="msg_keep_open">Biarkan Dual Space tetap terbuka. Biasanya hanya beberapa detik.</string>
+    <string name="action_diagnostics">Diagnostik &amp; log</string>
+    <string name="action_share_log">Bagikan file log</string>
+    <string name="action_export_log">Simpan ke Unduhan</string>
+    <string name="action_refresh">Muat ulang</string>
+    <string name="confirm_clear_logs">Hapus file log dan semua laporan crash?</string>
+    <string name="msg_log_exported">Tersimpan di %s</string>
+    <string name="msg_log_export_failed">Log tidak dapat disimpan: %s</string>
+    <string name="diag_log_header">File log: %1$s · %2$d baris terakhir ditampilkan di bawah</string>
+    <string name="diag_section_reports">Laporan crash / kegagalan / ANR</string>
+    <string name="diag_section_log">File log (terbaru di bagian bawah)</string>
 </resources>

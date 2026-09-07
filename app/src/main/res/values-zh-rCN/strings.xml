@@ -123,4 +123,33 @@
     <string name="pref_diagnostics_summary">设备信息和分身崩溃报告（不会上传任何内容）</string>
     <string name="step_storage_title">存储访问</string>
     <string name="step_storage_desc">允许“所有文件访问权限”，以便分身可以保存和打开照片、视频和下载文件。</string>
+
+    <string name="gms_status_connected">Google Play 服务：已连接</string>
+    <string name="gms_status_disconnected">Google Play 服务：未连接</string>
+    <string name="gms_status_checking">Google Play 服务：检查中…</string>
+    <string name="gms_reason_no_host">本机未安装</string>
+    <string name="gms_reason_engine">引擎未运行 — 点按“修复”</string>
+    <string name="gms_reason_unlinked">%d 个分身未关联 — 点按“修复”</string>
+    <string name="gms_not_linked">Google Play 服务：未关联 — 点按修复</string>
+    <string name="action_fix">修复</string>
+    <string name="msg_gms_repairing">正在重新关联 Google Play 服务…</string>
+    <string name="msg_gms_repaired">所有分身均已关联 Google Play 服务</string>
+    <string name="msg_gms_repair_failed">无法关联 Google Play 服务，请查看诊断。</string>
+    <string name="msg_cloning_app">正在克隆 %s…</string>
+    <string name="clone_step_preparing">正在准备沙箱槽位…</string>
+    <string name="clone_step_gms">正在关联 Google Play 服务…</string>
+    <string name="clone_step_installing">正在把应用安装到沙箱…</string>
+    <string name="clone_step_finishing">正在完成…</string>
+    <string name="clone_step_done">完成</string>
+    <string name="msg_keep_open">请保持 Dual Space 打开，通常只需几秒钟。</string>
+    <string name="action_diagnostics">诊断与日志</string>
+    <string name="action_share_log">分享日志文件</string>
+    <string name="action_export_log">保存到下载</string>
+    <string name="action_refresh">刷新</string>
+    <string name="confirm_clear_logs">删除日志文件和所有崩溃报告？</string>
+    <string name="msg_log_exported">已保存到 %s</string>
+    <string name="msg_log_export_failed">无法保存日志：%s</string>
+    <string name="diag_log_header">日志文件：%1$s · 下方显示最后 %2$d 行</string>
+    <string name="diag_section_reports">崩溃 / 失败 / ANR 报告</string>
+    <string name="diag_section_log">日志文件（最新在底部）</string>
 </resources>

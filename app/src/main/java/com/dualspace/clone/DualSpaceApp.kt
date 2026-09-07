@@ -6,7 +6,9 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.dualspace.clone.data.CloneStore
 import com.dualspace.clone.data.GmsLinker
+import com.dualspace.clone.util.AnrWatchdog
 import com.dualspace.clone.util.CrashLog
+import com.dualspace.clone.util.DsLog
 import com.dualspace.clone.util.Prefs
 import com.google.android.material.color.DynamicColors
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import top.niunaijun.blackbox.BlackBoxCore
+import top.niunaijun.blackbox.app.configuration.AppLifecycleCallback
 import top.niunaijun.blackbox.app.configuration.ClientConfiguration
+import top.niunaijun.blackbox.utils.Slog
 import java.io.File
 
 /**
@@ -22,14 +26,18 @@ import java.io.File
  * anything else, because every cloned app process is spawned from this Application
  * class as well — `attachBaseContext` runs in the host process and in each virtual
  * process, so keep it minimal and only do host-only work when `isMainProcess`.
+ *
+ * Order matters in [attachBaseContext]: the log file and the system crash handler are set up
+ * *before* the engine class is first touched, because its static initialiser replaces the
+ * default uncaught-exception handler (see [CrashLog] for why we need the original one).
  */
 class DualSpaceApp : Application() {
-
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
         appContext = base
+        CrashLog.captureSystemHandler()
+        DsLog.init(base)
         try {
             BlackBoxCore.get().doAttachBaseContext(base, object : ClientConfiguration() {
                 override fun getHostPackageName(): String = base.packageName
@@ -45,18 +53,33 @@ class DualSpaceApp : Application() {
 
                 // Never send logs anywhere. Returning null keeps the engine's log uploader off.
                 override fun getLogSenderChatId(): String? = null
+
+                // We keep our own bounded log file; the engine's endless logcat pipe stays off.
+                override fun isEnableLogcatCapture(): Boolean = false
             })
-        } catch (e: Exception) {
-            Log.e(TAG, "Engine attach failed", e)
+            // Engine warnings and errors go into the same log file as ours.
+            Slog.setSink(DsLog, Log.WARN)
+        } catch (e: Throwable) {
+            DsLog.e(TAG, "Engine attach failed", e)
         }
+        DsLog.logProcessStart(BuildConfig.VERSION_NAME)
     }
 
     override fun onCreate() {
         super.onCreate()
-        BlackBoxCore.get().doCreate()
+        try {
+            BlackBoxCore.get().doCreate()
+        } catch (t: Throwable) {
+            DsLog.e(TAG, "Engine create failed", t)
+        }
+        // Every process: crash recorder (with the main-thread kill policy), ANR watchdog and
+        // a lifecycle logger so the log shows which clone was starting when something broke.
         CrashLog.install(this)
+        AnrWatchdog.start(this)
+        runCatching { BlackBoxCore.get().addAppLifecycleCallback(lifecycleLogger) }
 
-        if (!BlackBoxCore.get().isMainProcess) return
+        val main = runCatching { BlackBoxCore.get().isMainProcess }.getOrDefault(false)
+        if (!main) return
 
         // Host-process-only initialisation from here on.
         instance = this
@@ -73,17 +96,43 @@ class DualSpaceApp : Application() {
 
         // Make sure Google Play Services is linked in every clone slot and is refreshed
         // whenever the phone's own Play Services was updated — so clones never show a
-        // "Play Services missing / out of date" prompt.
-        appScope.launch { GmsLinker.syncAll(this@DualSpaceApp) }
+        // "Play Services missing / out of date" prompt. Also publishes the first status.
+        appScope.launch {
+            runCatching { GmsLinker.syncAll(this@DualSpaceApp) }
+                .onFailure { DsLog.e(TAG, "GMS sync at start failed", it) }
+        }
+    }
+
+    private val lifecycleLogger = object : AppLifecycleCallback() {
+        override fun beforeMainLaunchApk(packageName: String?, userid: Int) {
+            DsLog.i("Clone", "launch requested: $packageName slot $userid")
+        }
+
+        override fun beforeCreateApplication(packageName: String?, processName: String?, context: Context?, userId: Int) {
+            DsLog.i("Clone", "starting $packageName (slot $userId) in process '${DsLog.processLabel()}' ($processName)")
+        }
+
+        override fun afterApplicationOnCreate(packageName: String?, processName: String?, application: Application?, userId: Int) {
+            DsLog.i("Clone", "$packageName (slot $userId) Application.onCreate done")
+        }
+
+        override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {
+            DsLog.d("Clone", "activity created: ${activity.javaClass.name}")
+        }
     }
 
     companion object {
         private const val TAG = "DualSpaceApp"
 
+        /** Background work that must outlive any single screen (GMS sync, boot re-link). */
+        val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         lateinit var appContext: Context
             private set
 
-        lateinit var instance: DualSpaceApp
+        /** Set in the host UI process only; null in engine and clone processes. */
+        @Volatile
+        var instance: DualSpaceApp? = null
             private set
     }
 }

@@ -133,4 +133,38 @@
     <string name="pref_diagnostics_summary">Device info and crash reports of clones (nothing is uploaded)</string>
     <string name="step_storage_title">Storage access</string>
     <string name="step_storage_desc">Allow “All files access” so clones can save and open photos, videos and downloads.</string>
+
+    <!-- v1.2: Google Play Services indicator -->
+    <string name="gms_status_connected">Google Play Services: connected</string>
+    <string name="gms_status_disconnected">Google Play Services: disconnected</string>
+    <string name="gms_status_checking">Google Play Services: checking…</string>
+    <string name="gms_reason_no_host">Not installed on this phone</string>
+    <string name="gms_reason_engine">Engine not running — tap Fix</string>
+    <string name="gms_reason_unlinked">Not linked in %d clone(s) — tap Fix</string>
+    <string name="gms_not_linked">Google Play Services: not linked — tap to fix</string>
+    <string name="action_fix">Fix</string>
+    <string name="msg_gms_repairing">Re-linking Google Play Services…</string>
+    <string name="msg_gms_repaired">Google Play Services is linked in every clone</string>
+    <string name="msg_gms_repair_failed">Could not link Google Play Services. Check Diagnostics.</string>
+
+    <!-- v1.2: clone progress -->
+    <string name="msg_cloning_app">Cloning %s…</string>
+    <string name="clone_step_preparing">Preparing sandbox slot…</string>
+    <string name="clone_step_gms">Linking Google Play Services…</string>
+    <string name="clone_step_installing">Installing the app into its sandbox…</string>
+    <string name="clone_step_finishing">Finishing up…</string>
+    <string name="clone_step_done">Done</string>
+    <string name="msg_keep_open">Keep Dual Space open. This usually takes a few seconds.</string>
+
+    <!-- v1.2: diagnostics & log file -->
+    <string name="action_diagnostics">Diagnostics &amp; logs</string>
+    <string name="action_share_log">Share log file</string>
+    <string name="action_export_log">Save to Downloads</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="confirm_clear_logs">Delete the log file and all crash reports?</string>
+    <string name="msg_log_exported">Saved to %s</string>
+    <string name="msg_log_export_failed">Could not save the log: %s</string>
+    <string name="diag_log_header">Log file: %1$s · last %2$d lines shown below</string>
+    <string name="diag_section_reports">Crash / failure / ANR reports</string>
+    <string name="diag_section_log">Log file (newest at the bottom)</string>
 </resources>

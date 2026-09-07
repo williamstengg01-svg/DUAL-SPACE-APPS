@@ -58,7 +58,5 @@ data class InstalledApp(
     val packageName: String,
     val label: String,
     val sourceDir: String,
-    /** false when the app ships native libs only for the other CPU architecture. */
-    val abiSupported: Boolean,
     val isSystem: Boolean
 )

@@ -69,8 +69,17 @@ class SettingsActivity : AppCompatActivity() {
                 startActivity(Intent(requireContext(), DiagnosticsActivity::class.java)); true
             }
 
-            findPreference<Preference>("gms")!!.summary = getString(
-                if (GmsLinker.isSupported()) R.string.pref_gms_summary_ok else R.string.pref_gms_summary_none)
+            findPreference<Preference>("gms")!!.apply {
+                val s = GmsLinker.lastStatus
+                summary = when {
+                    !GmsLinker.isSupported() -> getString(R.string.pref_gms_summary_none)
+                    s != null && !s.connected -> getString(R.string.gms_status_disconnected)
+                    else -> getString(R.string.pref_gms_summary_ok)
+                }
+                setOnPreferenceClickListener {
+                    startActivity(Intent(requireContext(), DiagnosticsActivity::class.java)); true
+                }
+            }
 
             findPreference<Preference>("about")!!.summary = getString(
                 R.string.pref_about_summary, BuildConfig.VERSION_NAME,

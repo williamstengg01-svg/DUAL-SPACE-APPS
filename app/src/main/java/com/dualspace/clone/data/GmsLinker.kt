@@ -3,64 +3,165 @@ package com.dualspace.clone.data
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
+import android.os.SystemClock
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.dualspace.clone.util.DsLog
 import com.dualspace.clone.util.Prefs
 import top.niunaijun.blackbox.BlackBoxCore
+import top.niunaijun.blackbox.core.system.ServiceManager
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Keeps Google Play Services "pre-linked" inside every clone slot.
+ * Keeps Google Play Services "pre-linked" inside every clone slot and knows, at any moment,
+ * whether that link is healthy — the green / red indicator in the UI comes from here.
  *
- * How it works: the engine mirrors the phone's own Google Play Services, Google Services
+ * How linking works: the engine mirrors the phone's own Google Play Services, Google Services
  * Framework and Play Store packages into a virtual user. Once they are present in a slot,
- * any app cloned into that slot resolves `com.google.android.gms` normally — Google
- * sign-in, FCM push, Maps, in-app billing and Play Integrity all go through it — and the
- * app never sees a "Play Services missing / please link" state.
+ * any app cloned into that slot resolves `com.google.android.gms` normally.
  *
- * Because the mirror is taken from the host phone, "keeping it up to date" only means:
- * whenever the phone's Play Services version changes, re-mirror it into every slot.
+ * Threading: everything that talks to the engine is a Binder call into the `:black` process
+ * and can block for a second or more while that process starts. Call those from
+ * `Dispatchers.IO` only. [cachedLinked] and [status] are safe on the main thread.
+ *
+ * Locking is per slot, so linking slot 3 never makes the launch of a clone in slot 0 wait.
  */
 object GmsLinker {
     private const val TAG = "GmsLinker"
     private const val GMS_PKG = "com.google.android.gms"
 
-    /** True when the phone itself has Google Play Services, i.e. we have something to mirror. */
+    /** A snapshot of the link health, published on [status]. */
+    data class Status(
+        /** The phone itself has Google Play Services, i.e. there is something to mirror. */
+        val hostHasGms: Boolean,
+        /** The engine's service process answered. */
+        val engineReachable: Boolean,
+        /** Per clone slot: is the GMS mirror installed there. */
+        val linked: Map<Int, Boolean>,
+        val checkedAt: Long = System.currentTimeMillis()
+    ) {
+        val unlinkedSlots: Set<Int> get() = linked.filterValues { !it }.keys
+        /** Green when true, red otherwise. */
+        val connected: Boolean get() = hostHasGms && engineReachable && unlinkedSlots.isEmpty()
+    }
+
+    private val locks = ConcurrentHashMap<Int, Any>()
+    private fun lockFor(userId: Int): Any = locks.getOrPut(userId) { Any() }
+
+    private val linkedCache = ConcurrentHashMap<Int, Boolean>()
+    private val statusLive = MutableLiveData<Status>()
+
+    val status: LiveData<Status> get() = statusLive
+    val lastStatus: Status? get() = statusLive.value
+
+    /** Last known link state of a slot without touching the engine (null = not checked yet). */
+    fun cachedLinked(userId: Int): Boolean? = linkedCache[userId]
+
+    /** True when the phone itself has Google Play Services. Cheap (host PackageManager). */
     fun isSupported(): Boolean = runCatching { BlackBoxCore.get().isSupportGms }.getOrDefault(false)
 
-    fun isLinked(userId: Int): Boolean =
-        runCatching { BlackBoxCore.get().isInstallGms(userId) }.getOrDefault(false)
+    /** Binder call — IO thread only. Updates the cache. */
+    fun isLinked(userId: Int): Boolean {
+        val v = runCatching { BlackBoxCore.get().isInstallGms(userId) }
+            .onFailure { DsLog.w(TAG, "isInstallGms(user=$userId) threw", it) }
+            .getOrDefault(false)
+        linkedCache[userId] = v
+        return v
+    }
+
+    /** Binder call — IO thread only. Does the engine's service process answer? */
+    fun isEngineReachable(): Boolean = runCatching {
+        BlackBoxCore.get().getService(ServiceManager.PACKAGE_MANAGER)?.isBinderAlive == true
+    }.getOrDefault(false)
 
     /**
      * Ensure GMS is present in [userId]. Called *before* an app is installed into a slot so
      * the very first launch of the clone already has Play Services. Returns true on success
      * or when GMS is not available on this phone at all (nothing to do).
      */
-    @Synchronized
     fun ensure(userId: Int): Boolean {
         if (!isSupported()) return true
-        if (isLinked(userId)) return true
-        val result = runCatching { BlackBoxCore.get().installGms(userId) }.getOrNull()
-        val ok = result?.success == true
-        Log.i(TAG, "installGms(user=$userId) -> $ok ${result?.msg ?: ""}")
-        return ok
+        synchronized(lockFor(userId)) {
+            if (isLinked(userId)) return true
+            val t0 = SystemClock.elapsedRealtime()
+            val result = runCatching { BlackBoxCore.get().installGms(userId) }
+                .onFailure { DsLog.e(TAG, "installGms(user=$userId) threw", it) }
+                .getOrNull()
+            val ok = result?.success == true
+            linkedCache[userId] = ok
+            DsLog.i(TAG, "installGms(user=$userId) -> ${if (ok) "linked" else "FAILED"} in " +
+                "${SystemClock.elapsedRealtime() - t0} ms ${result?.msg.orEmpty()}")
+            return ok
+        }
     }
 
     /**
      * Link GMS into every slot that has clones, and re-link everywhere if the phone's Play
      * Services was updated since we last looked. Safe to call often; it is cheap when
-     * nothing changed.
+     * nothing changed. Publishes a fresh [status] when done.
      */
-    @Synchronized
     fun syncAll(context: Context) {
-        if (!isSupported()) return
+        if (!isSupported()) { refreshStatus(); return }
         val hostVersion = hostGmsVersion(context)
         val changed = hostVersion != Prefs.hostGmsVersion
+        if (changed) DsLog.i(TAG, "host Play Services changed (${Prefs.hostGmsVersion} -> $hostVersion); re-linking all slots")
         for (userId in CloneStore.userIds()) {
-            if (changed && isLinked(userId)) {
-                runCatching { BlackBoxCore.get().uninstallGms(userId) }
+            synchronized(lockFor(userId)) {
+                if (changed && isLinked(userId)) {
+                    runCatching { BlackBoxCore.get().uninstallGms(userId) }
+                        .onFailure { DsLog.w(TAG, "uninstallGms(user=$userId) threw", it) }
+                    linkedCache.remove(userId)
+                }
             }
             ensure(userId)
         }
         if (changed) Prefs.hostGmsVersion = hostVersion
+        refreshStatus()
+    }
+
+    /** Re-check everything and publish. IO thread only. */
+    fun refreshStatus(): Status {
+        val host = isSupported()
+        val engine = isEngineReachable()
+        val linked = LinkedHashMap<Int, Boolean>()
+        if (engine) {
+            for (userId in CloneStore.userIds().sorted()) linked[userId] = host && isLinked(userId)
+        } else {
+            for (userId in CloneStore.userIds().sorted()) linked[userId] = false
+        }
+        val s = Status(host, engine, linked)
+        statusLive.postValue(s)
+        DsLog.i(TAG, "status: host=$host engine=$engine linked=$linked -> ${if (s.connected) "CONNECTED" else "DISCONNECTED"}")
+        return s
+    }
+
+    /**
+     * What the "Fix" button does: wake the engine if needed, then (re)link every slot that
+     * is missing the mirror. IO thread only.
+     */
+    fun repairAll(): Status {
+        DsLog.i(TAG, "repair requested by user")
+        if (!isEngineReachable()) {
+            runCatching { BlackBoxCore.get().ensureBlackProcessInitialized() }
+                .onFailure { DsLog.w(TAG, "ensureBlackProcessInitialized threw", it) }
+            // Give the service process a moment to come up.
+            var waited = 0
+            while (!isEngineReachable() && waited < 8_000) { SystemClock.sleep(500); waited += 500 }
+        }
+        if (isSupported()) {
+            for (userId in CloneStore.userIds()) {
+                if (!ensure(userId)) {
+                    // A half-installed mirror can report "installed" for some packages only;
+                    // wipe and redo once.
+                    synchronized(lockFor(userId)) {
+                        runCatching { BlackBoxCore.get().uninstallGms(userId) }
+                        linkedCache.remove(userId)
+                    }
+                    ensure(userId)
+                }
+            }
+        }
+        return refreshStatus()
     }
 
     private fun hostGmsVersion(context: Context): Long = try {

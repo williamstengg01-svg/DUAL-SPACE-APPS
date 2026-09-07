@@ -6,7 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -18,6 +20,7 @@ import com.dualspace.clone.data.CloneStore
 import com.dualspace.clone.data.GmsLinker
 import com.dualspace.clone.databinding.ActivityCloneDetailBinding
 import com.dualspace.clone.model.Clone
+import com.dualspace.clone.util.FailureText
 import com.dualspace.clone.util.Prefs
 import com.dualspace.clone.util.StorageUtil
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -28,8 +31,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import android.widget.Toast
-import com.dualspace.clone.util.FailureText
 
 /** Per-clone management: rename, icon, freeze, hide, lock, shortcut, clear data, delete. */
 class CloneDetailActivity : AppCompatActivity() {
@@ -55,6 +56,7 @@ class CloneDetailActivity : AppCompatActivity() {
                 if (result is CloneManager.LaunchResult.Failed) {
                     Toast.makeText(this@CloneDetailActivity, getString(R.string.msg_launch_failed_reason, result.reason), Toast.LENGTH_LONG).show()
                 }
+                renderGms()
             }
         }
         b.btnRename.setOnClickListener { rename() }
@@ -64,10 +66,11 @@ class CloneDetailActivity : AppCompatActivity() {
         b.btnResetIcon.setOnClickListener {
             clone.customIconPath?.let { File(it).delete() }
             clone.customIconPath = null
+            IconCache.invalidatePrefix("clone:${clone.id}:")
             save()
         }
         b.switchFreeze.setOnCheckedChangeListener { _, on ->
-            if (on != clone.frozen) lifecycleScope.launch(Dispatchers.IO) { CloneManager.setFrozen(clone, on) }
+            if (on != clone.frozen) lifecycleScope.launch(Dispatchers.IO) { runCatching { CloneManager.setFrozen(clone, on) } }
         }
         b.switchHide.setOnCheckedChangeListener { _, on -> if (on != clone.hidden) { clone.hidden = on; save() } }
         b.switchLock.setOnCheckedChangeListener { _, on ->
@@ -82,25 +85,61 @@ class CloneDetailActivity : AppCompatActivity() {
         b.btnDelete.setOnClickListener {
             confirm(R.string.action_delete, R.string.confirm_delete) { CloneManager.delete(clone) }
         }
+        // Tapping the red status line re-links Play Services for this slot.
+        b.gms.setOnClickListener { repairGms() }
         render()
     }
 
     private fun render() {
         supportActionBar?.title = clone.label
-        b.icon.setImageDrawable(CloneManager.icon(this, clone))
+        IconCache.load(b.icon, CloneAdapter.iconKey(clone), packageManager.defaultActivityIcon) {
+            CloneManager.icon(this, clone)
+        }
         b.name.text = clone.label
         b.pkg.text = "${clone.packageName}  ·  ${getString(R.string.slot_n, clone.userId)}"
         b.switchFreeze.isChecked = clone.frozen
         b.switchHide.isChecked = clone.hidden
         b.switchLock.isChecked = clone.locked
         b.btnResetIcon.isEnabled = clone.customIconPath != null
-        b.gms.text = getString(
-            if (!GmsLinker.isSupported()) R.string.gms_unavailable
-            else if (GmsLinker.isLinked(clone.userId)) R.string.gms_linked else R.string.gms_linking
-        )
         lifecycleScope.launch {
             val bytes = withContext(Dispatchers.IO) { runCatching { CloneManager.storageBytes(clone) }.getOrDefault(0L) }
             b.storage.text = getString(R.string.storage_used, StorageUtil.human(bytes))
+        }
+        renderGms()
+    }
+
+    /** The link check is a Binder call into the engine: never on the main thread. */
+    private fun renderGms() {
+        // Paint what we already know right away, then confirm in the background.
+        paintGms(GmsLinker.cachedLinked(clone.userId), GmsLinker.isSupported())
+        lifecycleScope.launch {
+            val supported = GmsLinker.isSupported()
+            val linked = withContext(Dispatchers.IO) { runCatching { GmsLinker.isLinked(clone.userId) }.getOrDefault(false) }
+            paintGms(linked, supported)
+        }
+    }
+
+    private fun paintGms(linked: Boolean?, supported: Boolean) {
+        val (text, dot, color) = when {
+            !supported -> Triple(R.string.gms_unavailable, R.drawable.dot_red, android.R.color.holo_red_dark)
+            linked == true -> Triple(R.string.gms_linked, R.drawable.dot_green, android.R.color.holo_green_dark)
+            linked == false -> Triple(R.string.gms_not_linked, R.drawable.dot_red, android.R.color.holo_red_dark)
+            else -> Triple(R.string.gms_status_checking, R.drawable.dot_grey, android.R.color.darker_gray)
+        }
+        b.gms.setText(text)
+        b.gms.setTextColor(ContextCompat.getColor(this, color))
+        b.gms.setCompoundDrawablesRelativeWithIntrinsicBounds(dot, 0, 0, 0)
+        b.gms.compoundDrawablePadding = (6 * resources.displayMetrics.density).toInt()
+        b.gms.isClickable = supported && linked == false
+    }
+
+    private fun repairGms() {
+        if (!GmsLinker.isSupported()) return
+        Snackbar.make(b.root, R.string.msg_gms_repairing, Snackbar.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) { runCatching { GmsLinker.ensure(clone.userId) }.getOrDefault(false) }
+            renderGms()
+            Snackbar.make(b.root, if (ok) R.string.msg_gms_repaired else R.string.msg_gms_repair_failed, Snackbar.LENGTH_LONG).show()
         }
     }
 
@@ -125,18 +164,21 @@ class CloneDetailActivity : AppCompatActivity() {
         if (!ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
             Snackbar.make(b.root, R.string.msg_shortcut_unsupported, Snackbar.LENGTH_LONG).show(); return
         }
-        val intent = Intent(this, ShortcutActivity::class.java)
-            .setAction(Intent.ACTION_MAIN)
-            .putExtra(ShortcutActivity.EXTRA_ID, clone.id)
-        val bmp = CloneManager.icon(this, clone).toBitmap(192, 192)
-        val info = ShortcutInfoCompat.Builder(this, "clone_${clone.id}")
-            .setIntent(intent)
-            .setShortLabel(clone.label)
-            .setLongLabel(clone.label)
-            .setIcon(IconCompat.createWithBitmap(bmp))
-            .build()
-        ShortcutManagerCompat.requestPinShortcut(this, info, null)
-        Snackbar.make(b.root, R.string.msg_shortcut_requested, Snackbar.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            val bmp = withContext(Dispatchers.IO) { runCatching { CloneManager.icon(this@CloneDetailActivity, clone).toBitmap(192, 192) }.getOrNull() }
+                ?: return@launch
+            val intent = Intent(this@CloneDetailActivity, ShortcutActivity::class.java)
+                .setAction(Intent.ACTION_MAIN)
+                .putExtra(ShortcutActivity.EXTRA_ID, clone.id)
+            val info = ShortcutInfoCompat.Builder(this@CloneDetailActivity, "clone_${clone.id}")
+                .setIntent(intent)
+                .setShortLabel(clone.label)
+                .setLongLabel(clone.label)
+                .setIcon(IconCompat.createWithBitmap(bmp))
+                .build()
+            runCatching { ShortcutManagerCompat.requestPinShortcut(this@CloneDetailActivity, info, null) }
+            Snackbar.make(b.root, R.string.msg_shortcut_requested, Snackbar.LENGTH_LONG).show()
+        }
     }
 
     private fun confirm(titleRes: Int, msgRes: Int, action: () -> Unit) {
@@ -145,7 +187,7 @@ class CloneDetailActivity : AppCompatActivity() {
             .setMessage(msgRes)
             .setPositiveButton(titleRes) { _, _ ->
                 lifecycleScope.launch {
-                    withContext(Dispatchers.IO) { action() }
+                    withContext(Dispatchers.IO) { runCatching(action) }
                     if (CloneStore.byId(clone.id) == null) finish() else render()
                 }
             }
@@ -169,7 +211,11 @@ class CloneDetailActivity : AppCompatActivity() {
                             f.absolutePath
                         }.getOrNull()
                     }
-                    if (path != null) { clone.customIconPath = path; save() }
+                    if (path != null) {
+                        clone.customIconPath = path
+                        IconCache.invalidatePrefix("clone:${clone.id}:")
+                        save()
+                    }
                 }
             }
             REQ_SET_PIN -> if (resultCode == Activity.RESULT_OK) { clone.locked = true; save() }

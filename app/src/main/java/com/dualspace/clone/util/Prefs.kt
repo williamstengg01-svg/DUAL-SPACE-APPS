@@ -3,17 +3,29 @@ package com.dualspace.clone.util
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.dualspace.clone.DualSpaceApp
 import java.security.MessageDigest
 
-/** Small typed wrapper over SharedPreferences for host-app settings. */
+/**
+ * Small typed wrapper over SharedPreferences for host-app settings.
+ *
+ * Self-initialising: if something touches it before `DualSpaceApp.onCreate` ran (or in a
+ * process the engine mis-classified), it falls back to the application context instead of
+ * throwing `UninitializedPropertyAccessException` and taking the UI down.
+ */
 object Prefs {
     private const val FILE = "dualspace_prefs"
 
-    private lateinit var sp: SharedPreferences
+    @Volatile private var prefs: SharedPreferences? = null
 
     fun init(context: Context) {
-        sp = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        if (prefs == null) prefs = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
     }
+
+    private val sp: SharedPreferences
+        get() = prefs ?: synchronized(this) {
+            prefs ?: DualSpaceApp.appContext.getSharedPreferences(FILE, Context.MODE_PRIVATE).also { prefs = it }
+        }
 
     // ---- first-run / setup wizard ----
     var setupCompleted: Boolean

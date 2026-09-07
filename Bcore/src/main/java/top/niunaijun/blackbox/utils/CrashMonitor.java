@@ -380,7 +380,7 @@ public class CrashMonitor {
             
             if (memoryUsagePercent > 80) {
                 Slog.w(TAG, "High memory usage detected: " + String.format("%.1f%%", memoryUsagePercent));
-                System.gc(); 
+                new Thread(System::gc, "crashmonitor-gc").start(); // off the main thread: a blocking gc() here caused periodic UI hitches
             }
             
             

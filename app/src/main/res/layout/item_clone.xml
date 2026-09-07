@@ -56,13 +56,29 @@
             app:tint="@android:color/white" />
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/label"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="2"
-        android:textAppearance="?attr/textAppearanceLabelMedium" />
+        android:orientation="horizontal">
+
+        <!-- Google Play Services link indicator for this clone: green = linked, red = not -->
+        <ImageView
+            android:id="@+id/dotGms"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/gms_status_connected"
+            android:src="@drawable/dot_grey" />
+
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textAppearance="?attr/textAppearanceLabelMedium" />
+    </LinearLayout>
 </LinearLayout>

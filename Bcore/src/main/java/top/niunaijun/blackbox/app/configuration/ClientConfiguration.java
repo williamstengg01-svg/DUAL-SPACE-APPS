@@ -39,4 +39,14 @@ public abstract class ClientConfiguration {
     public String getLogSenderChatId() {
         return null; // Dual Space: no remote log upload
     }
+
+    /**
+     * When true the engine spawns a thread in the host process that pipes `logcat` into
+     * Downloads/logs for as long as the app lives. Off by default: it never stops, the file
+     * grows without bound and it competes for I/O with the clones. Dual Space keeps its own
+     * bounded log file instead (see Slog.Sink).
+     */
+    public boolean isEnableLogcatCapture() {
+        return false;
+    }
 }

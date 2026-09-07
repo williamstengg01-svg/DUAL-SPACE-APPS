@@ -86,6 +86,17 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
   crash log, added *Storage access* setup step, removed the engine's remote log uploader.
 * **1.0.0** — first release.
 
+## Getting the log file (when something crashes or freezes)
+
+1. Reproduce the problem once (open the clone, use it until it fails).
+2. Open Dual Space → **⋮ → Diagnostics & logs** (also under Settings).
+3. Tap **Share log file** and send it, or **Save to Downloads** and pick it up from
+   `Download/DualSpace/dualspace-log-<date>.txt` with any file manager.
+
+The file contains: device / Android version, the Play Services link status, every crash,
+failure and ANR report (with the stack trace and which clone it came from), and the log of
+the host app, the engine service and each clone process. Nothing is sent anywhere by itself.
+
 ## Troubleshooting — "the clone goes straight back to the home screen"
 
 1. Open the clone again from Dual Space. Since 1.1.1 a failed launch shows a message with the
