@@ -16,6 +16,7 @@ import com.dualspace.clone.data.CloneStore
 import com.dualspace.clone.data.GmsLinker
 import com.dualspace.clone.databinding.ActivityMainBinding
 import com.dualspace.clone.model.Clone
+import com.dualspace.clone.util.CrashLog
 import com.dualspace.clone.util.DsLog
 import com.dualspace.clone.util.FailureText
 import com.dualspace.clone.util.Prefs
@@ -69,6 +70,19 @@ class MainActivity : AppCompatActivity() {
         if (!LockGate.requireUnlock(this, REQ_UNLOCK_APP)) return
         refreshStorage()
         refreshGms(force = false)
+        nudgeAboutNewReports()
+    }
+
+    /** A clone crashed or failed since Diagnostics was last opened: say so, with a shortcut to the log. */
+    private fun nudgeAboutNewReports() {
+        lifecycleScope.launch {
+            val newest = withContext(Dispatchers.IO) { runCatching { CrashLog.newestReportTime(this@MainActivity) }.getOrDefault(0L) }
+            if (newest > Prefs.lastReportSeenAt && newest > 0L) {
+                Snackbar.make(b.root, R.string.msg_new_reports, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.action_view) { startActivity(Intent(this@MainActivity, DiagnosticsActivity::class.java)) }
+                    .show()
+            }
+        }
     }
 
     // ------------------------------------------------------------------ rendering

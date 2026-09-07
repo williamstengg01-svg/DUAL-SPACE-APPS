@@ -17,6 +17,7 @@ import com.dualspace.clone.databinding.ActivityDiagnosticsBinding
 import com.dualspace.clone.util.BrandCompat
 import com.dualspace.clone.util.CrashLog
 import com.dualspace.clone.util.DsLog
+import com.dualspace.clone.util.Prefs
 import com.dualspace.clone.util.StorageUtil
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -45,6 +46,7 @@ class DiagnosticsActivity : AppCompatActivity() {
         setContentView(b.root)
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        Prefs.lastReportSeenAt = System.currentTimeMillis()
         b.btnShare.setOnClickListener { shareFile() }
         b.btnExport.setOnClickListener { export() }
         b.btnRefresh.setOnClickListener { render() }

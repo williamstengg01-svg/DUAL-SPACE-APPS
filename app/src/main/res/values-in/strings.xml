@@ -152,4 +152,7 @@
     <string name="diag_log_header">File log: %1$s · %2$d baris terakhir ditampilkan di bawah</string>
     <string name="diag_section_reports">Laporan crash / kegagalan / ANR</string>
     <string name="diag_section_log">File log (terbaru di bagian bawah)</string>
+
+    <string name="msg_new_reports">Ada klon yang crash atau gagal sejak terakhir Anda memeriksa. Detailnya ada di log.</string>
+    <string name="action_view">Lihat</string>
 </resources>

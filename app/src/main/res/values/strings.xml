@@ -167,4 +167,8 @@
     <string name="diag_log_header">Log file: %1$s · last %2$d lines shown below</string>
     <string name="diag_section_reports">Crash / failure / ANR reports</string>
     <string name="diag_section_log">Log file (newest at the bottom)</string>
+
+    <!-- v1.2.1 -->
+    <string name="msg_new_reports">A clone crashed or failed since you last checked. The log has the details.</string>
+    <string name="action_view">View</string>
 </resources>

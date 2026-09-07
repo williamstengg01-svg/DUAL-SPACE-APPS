@@ -9,6 +9,7 @@ import com.dualspace.clone.data.GmsLinker
 import com.dualspace.clone.util.AnrWatchdog
 import com.dualspace.clone.util.CrashLog
 import com.dualspace.clone.util.DsLog
+import com.dualspace.clone.util.NetProbe
 import com.dualspace.clone.util.Prefs
 import com.google.android.material.color.DynamicColors
 import kotlinx.coroutines.CoroutineScope
@@ -114,6 +115,8 @@ class DualSpaceApp : Application() {
 
         override fun afterApplicationOnCreate(packageName: String?, processName: String?, application: Application?, userId: Int) {
             DsLog.i("Clone", "$packageName (slot $userId) Application.onCreate done")
+            // From inside the clone's own process: what does *it* see of the network?
+            if (application != null) NetProbe.schedule(application, "$packageName/u$userId")
         }
 
         override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {

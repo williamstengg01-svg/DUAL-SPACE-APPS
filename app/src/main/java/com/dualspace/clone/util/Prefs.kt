@@ -61,6 +61,12 @@ object Prefs {
         get() = sp.getString("theme_mode", "system") ?: "system"
         set(v) = sp.edit { putString("theme_mode", v) }
 
+    // ---- diagnostics ----
+    /** When the user last opened Diagnostics; newer crash reports trigger a nudge on the home screen. */
+    var lastReportSeenAt: Long
+        get() = sp.getLong("last_report_seen_at", 0L)
+        set(v) = sp.edit { putLong("last_report_seen_at", v) }
+
     // ---- GMS bookkeeping ----
     var hostGmsVersion: Long
         get() = sp.getLong("host_gms_version", -1L)

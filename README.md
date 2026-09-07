@@ -70,6 +70,27 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
 
 ## Changelog
 
+* **1.2.1** — network inside clones.
+  * Rewrote the ConnectivityManager hook. Calls now carry the host package (the one the
+    system accepts for our UID), so NetworkCallback registration works: apps no longer sit
+    on "no connection" after login while their HTTP calls succeed. If a registration still
+    fails, the callback gets a synthetic request plus one `onAvailable` for the phone's
+    active network instead of a `null` that made `unregisterNetworkCallback` crash the app
+    later. Fabricated "connected" answers are used only when the system refuses a call,
+    never instead of a real `null`.
+  * Network self-test: a few seconds after a clone starts, its own process logs what it
+    sees (active network, INTERNET/VALIDATED, whether a default NetworkCallback fires, and
+    an HTTPS probe), so the log shows whether "offline" is real or only what the app believes.
+  * Home screen nudges when a new crash / failure report exists, with a shortcut to the log.
+* **1.2.0** — stability and diagnostics release.
+  * No more "isn't responding" freezes after a crash: the engine's crash-prevention
+    handlers swallowed main-thread exceptions and left a dead UI thread; main-thread crashes
+    now go to the system handler (clean exit, relaunch) and are recorded with the clone.
+  * Log file `files/logs/dualspace.log` (host, engine service and every clone process,
+    including engine warnings/errors), ANR watchdog, Diagnostics screen with share/export.
+  * Google Play Services indicator (green/red) on the home screen, clone tiles and clone page.
+  * Smoother cloning: no APK scan for the whole app list, icons decoded off the main thread,
+    step-by-step progress dialog, engine calls moved off the UI thread.
 * **1.1.1** — fixes clones that bounced straight back to the home screen:
   * engine: activity hand-over hook now works on **Android 16** (the framework removed
     `ClientTransaction.mActivityCallbacks` / `mActivityToken`; the hook now reads

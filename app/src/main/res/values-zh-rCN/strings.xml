@@ -152,4 +152,7 @@
     <string name="diag_log_header">日志文件：%1$s · 下方显示最后 %2$d 行</string>
     <string name="diag_section_reports">崩溃 / 失败 / ANR 报告</string>
     <string name="diag_section_log">日志文件（最新在底部）</string>
+
+    <string name="msg_new_reports">自上次查看以来，有分身崩溃或失败。详情见日志。</string>
+    <string name="action_view">查看</string>
 </resources>

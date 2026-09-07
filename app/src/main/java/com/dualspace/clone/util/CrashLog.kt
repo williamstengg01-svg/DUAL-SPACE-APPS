@@ -107,6 +107,10 @@ object CrashLog {
 
     fun clear(context: Context) { dir(context).listFiles()?.forEach { it.delete() } }
 
+    /** Timestamp of the newest report, 0 when there is none. */
+    fun newestReportTime(context: Context): Long =
+        dir(context).listFiles()?.maxOfOrNull { it.lastModified() } ?: 0L
+
     private fun cloneInfo(): String? = try {
         val pkg = top.niunaijun.blackbox.app.BActivityThread.getAppPackageName()
         if (pkg.isNullOrEmpty()) null else "$pkg (slot ${top.niunaijun.blackbox.app.BActivityThread.getUserId()})"
