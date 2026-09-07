@@ -81,6 +81,16 @@ object BrandCompat {
             required = false
         )
 
+        // 2b. Location. Apps inside clones get their location through Dual Space's own
+        //     permission, so granting it here once stops every clone from asking again.
+        list += Step(
+            key = "location",
+            title = R.string.step_location_title,
+            description = R.string.step_location_desc,
+            candidates = emptyList(),
+            required = false
+        )
+
         // 3. Autostart / background start permission — OEM specific.
         when (brand) {
             Brand.XIAOMI -> list += Step(
@@ -198,6 +208,12 @@ object BrandCompat {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return runCatching { context.startActivity(fallback); true }.getOrDefault(false)
     }
+
+    val LOCATION_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+
+    /** True when the host holds at least coarse location — enough for clones to get a fix. */
+    fun hasLocationAccess(context: Context): Boolean =
+        LOCATION_PERMISSIONS.any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
 
     fun hasStorageAccess(context: Context): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager()

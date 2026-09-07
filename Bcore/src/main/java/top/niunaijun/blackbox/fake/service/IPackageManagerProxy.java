@@ -432,8 +432,11 @@ public class IPackageManagerProxy extends BinderInvocationStub {
                 Slog.d(TAG, "SimpleAudioPermissionHook: Granting notification/Xiaomi permission: " + permission + " to " + packageName);
                 return PackageManager.PERMISSION_GRANTED;
             }
-            
-            
+
+            // Runtime permissions are the host's (our UID holds them), not the original app's.
+            if (MethodParameterUtils.isSandboxPkg(packageName)) {
+                args[1] = BlackBoxCore.getHostPkg();
+            }
             return method.invoke(who, args);
         }
     }
@@ -462,8 +465,10 @@ public class IPackageManagerProxy extends BinderInvocationStub {
                 Slog.d(TAG, "CheckSelfPermission: Granting notification/Xiaomi permission: " + permission + " to " + packageName);
                 return PackageManager.PERMISSION_GRANTED;
             }
-            
-            
+
+            if (MethodParameterUtils.isSandboxPkg(packageName)) {
+                args[1] = BlackBoxCore.getHostPkg();
+            }
             return method.invoke(who, args);
         }
     }

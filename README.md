@@ -70,6 +70,21 @@ Outputs land in `app/build/outputs/apk/<flavor>/<buildType>/`.
 
 ## Changelog
 
+* **1.2.2** — fixes from the first field log (OPPO, Android 15).
+  * Crash loop fixed: when Android restarted one of the engine's stub processes on its own
+    (a client was still bound when it died), the new process had no idea which app it hosted
+    and every incoming bind crashed it with a NullPointerException, once a second, until the
+    client gave up. The process now re-registers itself with the engine before serving the
+    bind, and a bind that still cannot be served returns null instead of crashing.
+  * Location prompts: runtime-permission checks made by a clone (and by the mirrored Play
+    Services on its behalf) are answered for the *host*, whose UID actually holds the grant,
+    instead of for the original app; Play Services' own location requests are no longer
+    blocked; and Dual Space asks for location once (setup step and before the first launch)
+    so clones stop asking.
+  * Play Services was sometimes silently not linked into a new slot because the engine's
+    client answered "installed" from the phone's package list; linking is now verified with
+    the engine service itself and retried.
+  * Broadcasts a clone sends "to all users" are sent to our own user instead of being refused.
 * **1.2.1** — network inside clones.
   * Rewrote the ConnectivityManager hook. Calls now carry the host package (the one the
     system accepts for our UID), so NetworkCallback registration works: apps no longer sit

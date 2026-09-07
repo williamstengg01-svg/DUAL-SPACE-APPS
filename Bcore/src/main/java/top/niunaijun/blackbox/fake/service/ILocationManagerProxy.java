@@ -47,22 +47,23 @@ public class ILocationManagerProxy extends BinderInvocationStub {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
-        MethodParameterUtils.replaceFirstAppPkg(args);
-        
-        
-        String packageName = BActivityThread.getAppPackageName();
-        if (packageName != null && packageName.equals("com.google.android.gms")) {
-            
-            if (method.getName().equals("getLastLocation") || 
-                method.getName().equals("getLastKnownLocation") ||
-                method.getName().equals("requestLocationUpdates")) {
-                Log.w(TAG, "Blocking location request from Google Play Services to prevent crash");
-                return null;
-            }
+        // Every package name the system sees must be the host's: the clone's own, and — when
+        // the mirrored Play Services asks on behalf of an app — that app's package too.
+        // (Location requests from the mirrored Play Services used to be blocked outright here;
+        // that left the Fused Location Provider silent, so apps kept asking for location.)
+        MethodParameterUtils.replaceAllAppPkgCached(args);
+        try {
+            return super.invoke(proxy, method, args);
+        } catch (SecurityException e) {
+            // The host has no location permission (yet). Answer like a phone without a fix
+            // instead of crashing the caller; Dual Space asks the user for the permission.
+            Log.w(TAG, "location." + method.getName() + " refused: " + e.getMessage());
+            Class<?> r = method.getReturnType();
+            if (r == boolean.class) return false;
+            if (r == int.class) return 0;
+            if (r == long.class) return 0L;
+            return null;
         }
-        
-        return super.invoke(proxy, method, args);
     }
 
     @ProxyMethod("registerGnssStatusCallback")

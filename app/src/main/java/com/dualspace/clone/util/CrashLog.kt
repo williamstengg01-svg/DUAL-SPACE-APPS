@@ -28,6 +28,10 @@ object CrashLog {
     @Volatile private var systemHandler: Thread.UncaughtExceptionHandler? = null
     @Volatile private var installed = false
 
+    /** True while the system handler is showing the crash dialog; the ANR watchdog stays quiet then. */
+    @Volatile var handingToSystem = false
+        private set
+
     private fun dir(context: Context): File =
         File(context.applicationContext.noBackupFilesDir, "crashes").apply { mkdirs() }
 
@@ -48,6 +52,7 @@ object CrashLog {
             if (isMain && sys != null) {
                 // Clean death beats a zombie process: let Android's own handler kill us.
                 DsLog.e(TAG, "main-thread crash in '${DsLog.processLabel()}' -> handing to system handler")
+                handingToSystem = true
                 sys.uncaughtException(thread, throwable)
             } else if (engineChain != null) {
                 engineChain.uncaughtException(thread, throwable)

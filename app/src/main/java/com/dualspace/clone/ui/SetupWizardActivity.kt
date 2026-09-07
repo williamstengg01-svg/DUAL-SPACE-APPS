@@ -55,6 +55,7 @@ class SetupWizardActivity : AppCompatActivity() {
         // Auto-verify the one step Android lets us query.
         if (BrandCompat.isIgnoringBatteryOptimizations(this)) Prefs.setStepDone("battery", true)
         if (BrandCompat.hasStorageAccess(this)) Prefs.setStepDone("storage", true)
+        if (BrandCompat.hasLocationAccess(this)) Prefs.setStepDone("location", true)
         adapter.notifyDataSetChanged()
         updateDone()
     }
@@ -80,10 +81,16 @@ class SetupWizardActivity : AppCompatActivity() {
                 b.check.isChecked = Prefs.isStepDone(step.key)
                 b.check.setOnCheckedChangeListener { _, on -> Prefs.setStepDone(step.key, on); updateDone() }
                 b.btnOpen.setOnClickListener {
-                    if (step.key == "storage" && Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                        ActivityCompat.requestPermissions(this@SetupWizardActivity,
-                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
-                    } else BrandCompat.open(b.root.context, step)
+                    when {
+                        step.key == "location" -> {
+                            Prefs.locationAsked = true
+                            ActivityCompat.requestPermissions(this@SetupWizardActivity, BrandCompat.LOCATION_PERMISSIONS, 2)
+                        }
+                        step.key == "storage" && Build.VERSION.SDK_INT < Build.VERSION_CODES.R ->
+                            ActivityCompat.requestPermissions(this@SetupWizardActivity,
+                                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+                        else -> BrandCompat.open(b.root.context, step)
+                    }
                 }
             }
         }

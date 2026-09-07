@@ -51,6 +51,41 @@ public class MethodParameterUtils {
         }
     }
 
+    /** isInstalled() answers, so hot paths (permission checks) do not pay a Binder call per string. */
+    private static final java.util.concurrent.ConcurrentHashMap<String, Boolean> sSandboxPkgCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** True when [pkg] is the current clone or another package installed in this clone's slot. */
+    public static boolean isSandboxPkg(String pkg) {
+        if (pkg == null || pkg.isEmpty() || pkg.indexOf('.') < 0) return false;
+        if (pkg.equals(BlackBoxCore.getHostPkg())) return false;
+        try {
+            String own = BActivityThread.getAppPackageName();
+            if (pkg.equals(own)) return true;
+        } catch (Throwable ignored) {
+        }
+        Boolean cached = sSandboxPkgCache.get(pkg);
+        if (cached != null) return cached;
+        boolean installed;
+        try {
+            installed = BlackBoxCore.get().isInstalled(pkg, BlackBoxCore.getUserId());
+        } catch (Throwable t) {
+            return false; // do not cache a failure
+        }
+        sSandboxPkgCache.put(pkg, installed);
+        return installed;
+    }
+
+    /** Like [replaceAllAppPkg] but with the cache above; safe to call on every Binder transaction. */
+    public static void replaceAllAppPkgCached(Object[] args) {
+        if (args == null) return;
+        String host = BlackBoxCore.getHostPkg();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] instanceof String && isSandboxPkg((String) args[i])) {
+                args[i] = host;
+            }
+        }
+    }
+
     public static void replaceFirstUid(Object[] args) {
         if (args == null)
             return;

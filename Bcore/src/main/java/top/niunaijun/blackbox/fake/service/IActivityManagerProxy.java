@@ -578,16 +578,25 @@ public class IActivityManagerProxy extends ClassInvocationStub {
             String resolvedType = (String) args[intentIndex + 1];
             Intent proxyIntent = BlackBoxCore.getBActivityManager().sendBroadcast(intent, resolvedType, BActivityThread.getUserId());
             if (proxyIntent != null) {
-                proxyIntent.setExtrasClassLoader(BActivityThread.getApplication().getClassLoader());
+                // GmsApplication broadcasts from attachBaseContext, before the Application
+                // object exists; the host class loader is fine for our own stub extras.
+                android.app.Application app = BActivityThread.getApplication();
+                proxyIntent.setExtrasClassLoader(app != null ? app.getClassLoader() : BlackBoxCore.getContext().getClassLoader());
                 ProxyBroadcastRecord.saveStub(proxyIntent, intent, BActivityThread.getUserId());
                 args[intentIndex] = proxyIntent;
             }
-            
+
             for (int i = 0; i < args.length; i++) {
                 Object o = args[i];
                 if (o instanceof String[]) {
                     args[i] = null;
                 }
+            }
+            // sendBroadcastAsUser(intent, UserHandle.ALL / CURRENT) passes a negative user id.
+            // Only the system may do that; as a plain app we can only address our own user.
+            int userIndex = top.niunaijun.blackbox.utils.ArrayUtils.indexOfLast(args, Integer.class);
+            if (userIndex != -1 && args[userIndex] != null && (Integer) args[userIndex] < 0) {
+                args[userIndex] = BlackBoxCore.getHostUserId();
             }
             return method.invoke(who, args);
         }

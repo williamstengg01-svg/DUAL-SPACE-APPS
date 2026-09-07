@@ -364,6 +364,14 @@ public class BActivityThread extends IBActivityThread.Stub {
         }
 
         PackageInfo packageInfo = BlackBoxCore.getBPackageManager().getPackageInfo(packageName, PackageManager.GET_PROVIDERS, BActivityThread.getUserId());
+        if (packageInfo == null || packageInfo.applicationInfo == null) {
+            // Happens when this process has no AppConfig (Android restarted it on its own) or the
+            // package is not installed in this slot. A clear exception beats a NullPointerException
+            // that the callers cannot tell apart from a bug.
+            throw new IllegalStateException("bindApplication: " + packageName + " (process " + processName
+                    + ") is not installed in slot " + BActivityThread.getUserId()
+                    + (getAppConfig() == null ? "; this process has no AppConfig" : ""));
+        }
         ApplicationInfo applicationInfo = packageInfo.applicationInfo;
         if (packageInfo.providers == null) {
             packageInfo.providers = new ProviderInfo[]{};

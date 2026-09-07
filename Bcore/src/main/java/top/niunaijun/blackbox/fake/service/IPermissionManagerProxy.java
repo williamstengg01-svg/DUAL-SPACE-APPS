@@ -60,4 +60,17 @@ public class IPermissionManagerProxy extends BinderInvocationStub {
         return false;
     }
 
+    /**
+     * Runtime permissions belong to the host: it is our UID that the system granted them to.
+     * Without this, checkPermission(pkg = the cloned app) answered with the *original* app's
+     * grant state, so a clone could believe it had location while the host had not, or keep
+     * asking for it after the user had already granted it to Dual Space. Play Services inside
+     * a clone checks the permission of the app it serves, so any sandbox package is mapped.
+     */
+    @Override
+    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
+        top.niunaijun.blackbox.utils.MethodParameterUtils.replaceAllAppPkgCached(args);
+        return super.invoke(proxy, method, args);
+    }
+
 }

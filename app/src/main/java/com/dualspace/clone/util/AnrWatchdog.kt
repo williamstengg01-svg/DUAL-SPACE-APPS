@@ -50,6 +50,8 @@ object AnrWatchdog {
     }
 
     private fun report(context: Context) {
+        // The main thread is inside the system crash handler (crash dialog); that is not an ANR.
+        if (CrashLog.handingToSystem) return
         val stack = runCatching {
             Looper.getMainLooper().thread.stackTrace.joinToString("\n") { "    at $it" }
         }.getOrDefault("(stack unavailable)")

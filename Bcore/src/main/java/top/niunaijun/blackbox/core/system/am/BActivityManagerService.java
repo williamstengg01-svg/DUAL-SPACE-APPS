@@ -321,7 +321,19 @@ public class BActivityManagerService extends IBActivityManagerService.Stub imple
 
     @Override
     public AppConfig initProcess(String packageName, String processName, int userId) throws RemoteException {
-        ProcessRecord processRecord = BProcessManagerService.get().startProcessLocked(packageName, processName, userId, -1, Binder.getCallingPid());
+        int callingPid = Binder.getCallingPid();
+        int bpid = -1;
+        // A stub process that Android restarted on its own has no ProcessRecord yet. It is asking
+        // to be registered for *itself*, so reuse its own stub index instead of spawning another
+        // process for the same package.
+        if (BProcessManagerService.get().findProcessByPid(callingPid) == null) {
+            bpid = BProcessManagerService.get().bpidOfPid(callingPid);
+            if (bpid >= 0) {
+                top.niunaijun.blackbox.utils.Slog.w("BActivityManagerService", "re-attaching orphaned stub process p" + bpid
+                        + " (pid " + callingPid + ") to " + packageName + "/" + processName + " in user " + userId);
+            }
+        }
+        ProcessRecord processRecord = BProcessManagerService.get().startProcessLocked(packageName, processName, userId, bpid, callingPid);
         if (processRecord == null)
             return null;
         return processRecord.getClientConfig();

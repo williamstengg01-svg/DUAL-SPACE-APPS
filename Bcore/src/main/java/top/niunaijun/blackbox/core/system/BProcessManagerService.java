@@ -129,6 +129,22 @@ public class BProcessManagerService implements ISystemService {
         }
     }
 
+    /** Stub index (the N in ":pN") of a live process of ours, or -1 if [pid] is not a stub process. */
+    public int bpidOfPid(int pid) {
+        try {
+            ActivityManager manager = (ActivityManager) BlackBoxCore.getContext().getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningAppProcessInfo> running = manager.getRunningAppProcesses();
+            if (running == null) return -1;
+            for (ActivityManager.RunningAppProcessInfo info : running) {
+                if (info.pid == pid) {
+                    return parseBPid(info.processName);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return -1;
+    }
+
     private int parseBPid(String stubProcessName) {
         String prefix;
         if (stubProcessName == null) {
@@ -194,7 +210,11 @@ public class BProcessManagerService implements ISystemService {
             record.kill();
             Map<String, ProcessRecord> process = mProcessMap.get(record.buid);
             if (process != null) {
-                process.remove(record.processName);
+                // Only drop the entry if it is still ours: a re-attached stub process may already
+                // have registered a fresh record under the same process name.
+                if (process.get(record.processName) == record) {
+                    process.remove(record.processName);
+                }
                 if (process.isEmpty()) {
                     mProcessMap.remove(record.buid);
                 }

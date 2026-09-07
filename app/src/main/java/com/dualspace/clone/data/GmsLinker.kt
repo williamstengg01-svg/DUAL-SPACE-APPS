@@ -10,6 +10,7 @@ import com.dualspace.clone.util.DsLog
 import com.dualspace.clone.util.Prefs
 import top.niunaijun.blackbox.BlackBoxCore
 import top.niunaijun.blackbox.core.system.ServiceManager
+import top.niunaijun.blackbox.core.system.pm.IBPackageManagerService
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -60,11 +61,27 @@ object GmsLinker {
     /** True when the phone itself has Google Play Services. Cheap (host PackageManager). */
     fun isSupported(): Boolean = runCatching { BlackBoxCore.get().isSupportGms }.getOrDefault(false)
 
+    /**
+     * Ask the engine's package service directly whether [pkg] is installed in [userId].
+     * The client-side wrapper (BPackageManager) switches to a "fallback mode" after a couple of
+     * early Binder failures and then answers from the *phone's* package list — which says
+     * "installed" for Play Services even when the slot is empty. That is how slot 0 ended up
+     * without Play Services in the field. Returns null when the service cannot be reached.
+     */
+    private fun directIsInstalled(pkg: String, userId: Int): Boolean? = try {
+        val binder = BlackBoxCore.get().getService(ServiceManager.PACKAGE_MANAGER)
+        if (binder == null || !binder.isBinderAlive) null
+        else IBPackageManagerService.Stub.asInterface(binder).isInstalled(pkg, userId)
+    } catch (t: Throwable) {
+        DsLog.w(TAG, "direct isInstalled($pkg, user=$userId) threw: $t"); null
+    }
+
     /** Binder call — IO thread only. Updates the cache. */
     fun isLinked(userId: Int): Boolean {
-        val v = runCatching { BlackBoxCore.get().isInstallGms(userId) }
-            .onFailure { DsLog.w(TAG, "isInstallGms(user=$userId) threw", it) }
-            .getOrDefault(false)
+        val v = directIsInstalled(GMS_PKG, userId)
+            ?: runCatching { BlackBoxCore.get().isInstallGms(userId) }
+                .onFailure { DsLog.w(TAG, "isInstallGms(user=$userId) threw", it) }
+                .getOrDefault(false)
         linkedCache[userId] = v
         return v
     }
@@ -84,10 +101,21 @@ object GmsLinker {
         synchronized(lockFor(userId)) {
             if (isLinked(userId)) return true
             val t0 = SystemClock.elapsedRealtime()
-            val result = runCatching { BlackBoxCore.get().installGms(userId) }
+            // The engine skips packages its client wrapper believes are installed; make sure that
+            // wrapper is talking to the real service and not to its fallback.
+            runCatching { BlackBoxCore.getBPackageManager().resetTransactionThrottler() }
+            var result = runCatching { BlackBoxCore.get().installGms(userId) }
                 .onFailure { DsLog.e(TAG, "installGms(user=$userId) threw", it) }
                 .getOrNull()
-            val ok = result?.success == true
+            var ok = result?.success == true && (directIsInstalled(GMS_PKG, userId) ?: true)
+            if (!ok) {
+                DsLog.w(TAG, "installGms(user=$userId) did not leave Play Services installed (success=${result?.success}); re-initialising the package client and retrying")
+                runCatching { BlackBoxCore.getBPackageManager().forceReinitialize() }
+                result = runCatching { BlackBoxCore.get().installGms(userId) }
+                    .onFailure { DsLog.e(TAG, "installGms(user=$userId) retry threw", it) }
+                    .getOrNull()
+                ok = result?.success == true && (directIsInstalled(GMS_PKG, userId) ?: true)
+            }
             linkedCache[userId] = ok
             DsLog.i(TAG, "installGms(user=$userId) -> ${if (ok) "linked" else "FAILED"} in " +
                 "${SystemClock.elapsedRealtime() - t0} ms ${result?.msg.orEmpty()}")

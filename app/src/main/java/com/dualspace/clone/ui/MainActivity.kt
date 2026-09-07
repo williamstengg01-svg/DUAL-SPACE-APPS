@@ -8,6 +8,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.dualspace.clone.R
@@ -16,6 +17,7 @@ import com.dualspace.clone.data.CloneStore
 import com.dualspace.clone.data.GmsLinker
 import com.dualspace.clone.databinding.ActivityMainBinding
 import com.dualspace.clone.model.Clone
+import com.dualspace.clone.util.BrandCompat
 import com.dualspace.clone.util.CrashLog
 import com.dualspace.clone.util.DsLog
 import com.dualspace.clone.util.FailureText
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
     private lateinit var adapter: CloneAdapter
     private var pendingLaunch: Clone? = null
+    private var pendingAfterPermission: Clone? = null
 
     private var storageJob: Job? = null
     private var storageForCount = -1
@@ -179,7 +182,31 @@ class MainActivity : AppCompatActivity() {
         doLaunch(clone)
     }
 
+    /**
+     * Apps inside clones get location through Dual Space's permission. Ask for it once, here,
+     * before the first launch — otherwise every clone would show the system prompt itself
+     * and, because the grant lands on Dual Space, ask again and again.
+     */
     private fun doLaunch(clone: Clone) {
+        if (!BrandCompat.hasLocationAccess(this) && !Prefs.locationAsked) {
+            Prefs.locationAsked = true
+            pendingAfterPermission = clone
+            ActivityCompat.requestPermissions(this, BrandCompat.LOCATION_PERMISSIONS, REQ_LOCATION)
+            return
+        }
+        launchNow(clone)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_LOCATION) {
+            DsLog.i("MainActivity", "location permission for clones: granted=${BrandCompat.hasLocationAccess(this)}")
+            val c = pendingAfterPermission; pendingAfterPermission = null
+            if (c != null) launchNow(c)
+        }
+    }
+
+    private fun launchNow(clone: Clone) {
         b.progress.visibility = View.VISIBLE
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -260,5 +287,6 @@ class MainActivity : AppCompatActivity() {
         private const val REQ_UNLOCK_APP = 2
         private const val REQ_UNLOCK_CLONE = 3
         private const val REQ_UNLOCK_HIDDEN = 4
+        private const val REQ_LOCATION = 5
     }
 }

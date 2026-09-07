@@ -171,4 +171,8 @@
     <!-- v1.2.1 -->
     <string name="msg_new_reports">A clone crashed or failed since you last checked. The log has the details.</string>
     <string name="action_view">View</string>
+
+    <!-- v1.2.2 -->
+    <string name="step_location_title">Location for clones</string>
+    <string name="step_location_desc">Apps inside clones use Dual Space’s location permission. Allow it once here (choose “While using the app”) so clones stop asking for location.</string>
 </resources>

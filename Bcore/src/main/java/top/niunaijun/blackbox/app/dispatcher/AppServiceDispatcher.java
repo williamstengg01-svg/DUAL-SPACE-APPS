@@ -213,6 +213,41 @@ public class AppServiceDispatcher {
         return mService.get(new Intent.FilterComparison(intent));
     }
 
+    /**
+     * When Android restarts one of our stub processes by itself (a client was still bound when
+     * the process died), the new process has no AppConfig: the engine never told it which
+     * package and user it hosts. The first bind then failed inside bindApplication, the process
+     * died, Android restarted it for the pending binding, and so on every second or two. Ask
+     * the engine to register this process for the service's package before doing anything.
+     */
+    private boolean ensureProcessReady(ServiceInfo serviceInfo, int userId) {
+        if (BActivityThread.getAppConfig() != null) {
+            return true;
+        }
+        top.niunaijun.blackbox.utils.Slog.w(TAG, "stub process has no AppConfig; re-registering it for "
+                + serviceInfo.packageName + "/" + serviceInfo.processName + " in slot " + userId);
+        top.niunaijun.blackbox.entity.AppConfig config = null;
+        try {
+            config = BlackBoxCore.getBActivityManager().initProcess(serviceInfo.packageName, serviceInfo.processName, userId);
+        } catch (Throwable t) {
+            top.niunaijun.blackbox.utils.Slog.w(TAG, "initProcess failed: " + t);
+        }
+        // The engine normally pushes the config into this process through our content provider
+        // during that call; keep the direct result as a fallback.
+        if (BActivityThread.getAppConfig() == null && config != null) {
+            try {
+                BActivityThread.currentActivityThread().initProcess(config);
+            } catch (Throwable t) {
+                top.niunaijun.blackbox.utils.Slog.w(TAG, "initProcess(config) rejected: " + t);
+            }
+        }
+        boolean ok = BActivityThread.getAppConfig() != null;
+        if (!ok) {
+            top.niunaijun.blackbox.utils.Slog.e(TAG, "could not re-register this process; refusing service " + serviceInfo.name);
+        }
+        return ok;
+    }
+
     private Service getOrCreateService(ProxyServiceRecord proxyServiceRecord) {
         Intent intent = proxyServiceRecord.mServiceIntent;
         ServiceInfo serviceInfo = proxyServiceRecord.mServiceInfo;
@@ -222,7 +257,20 @@ public class AppServiceDispatcher {
         if (record != null && record.getService() != null) {
             return record.getService();
         }
-        Service service = BlackBoxCore.currentActivityThread().createService(serviceInfo, token);
+        if (!ensureProcessReady(serviceInfo, proxyServiceRecord.mUserId)) {
+            return null;
+        }
+        Service service;
+        try {
+            service = BlackBoxCore.currentActivityThread().createService(serviceInfo, token);
+        } catch (Throwable t) {
+            // Returning null here means the client gets a null binding; throwing would take the
+            // whole process down and Android would restart it for the same binding, forever.
+            top.niunaijun.blackbox.utils.Slog.e(TAG, "createService failed for " + serviceInfo.name
+                    + " (" + serviceInfo.packageName + "/" + serviceInfo.processName + ", user "
+                    + proxyServiceRecord.mUserId + ")", t);
+            return null;
+        }
         if (service == null)
             return null;
         record = new ServiceRecord();

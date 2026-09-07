@@ -390,7 +390,7 @@ public class CrashMonitor {
             }
             
             int threadCount = rootGroup.activeCount();
-            if (threadCount > 100) {
+            if (threadCount > 250) {
                 Slog.w(TAG, "High thread count detected: " + threadCount);
             }
             

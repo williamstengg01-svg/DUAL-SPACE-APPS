@@ -61,6 +61,12 @@ object Prefs {
         get() = sp.getString("theme_mode", "system") ?: "system"
         set(v) = sp.edit { putString("theme_mode", v) }
 
+    // ---- permissions for clones ----
+    /** Dual Space asked the user for location once (clones inherit it); never nag again. */
+    var locationAsked: Boolean
+        get() = sp.getBoolean("location_asked", false)
+        set(v) = sp.edit { putBoolean("location_asked", v) }
+
     // ---- diagnostics ----
     /** When the user last opened Diagnostics; newer crash reports trigger a nudge on the home screen. */
     var lastReportSeenAt: Long

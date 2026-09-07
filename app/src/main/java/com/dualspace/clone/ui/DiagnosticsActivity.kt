@@ -69,7 +69,7 @@ class DiagnosticsActivity : AppCompatActivity() {
     private fun header(): String = buildString {
         appendLine("Dual Space ${BuildConfig.VERSION_NAME} (${if (BlackBoxCore.is64Bit()) "arm64" else "arm32"})")
         appendLine("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${getString(BrandCompat.detect().label)}")
-        appendLine("Clones: ${CloneStore.all().size} · battery-optimisation exempt: ${BrandCompat.isIgnoringBatteryOptimizations(this@DiagnosticsActivity)} · all-files access: ${BrandCompat.hasStorageAccess(this@DiagnosticsActivity)}")
+        appendLine("Clones: ${CloneStore.all().size} · battery-optimisation exempt: ${BrandCompat.isIgnoringBatteryOptimizations(this@DiagnosticsActivity)} · all-files access: ${BrandCompat.hasStorageAccess(this@DiagnosticsActivity)} · location for clones: ${BrandCompat.hasLocationAccess(this@DiagnosticsActivity)}")
     }
 
     private fun gmsLine(s: GmsLinker.Status?): String = when {

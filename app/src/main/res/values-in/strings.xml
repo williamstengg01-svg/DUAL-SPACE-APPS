@@ -155,4 +155,7 @@
 
     <string name="msg_new_reports">Ada klon yang crash atau gagal sejak terakhir Anda memeriksa. Detailnya ada di log.</string>
     <string name="action_view">Lihat</string>
+
+    <string name="step_location_title">Lokasi untuk klon</string>
+    <string name="step_location_desc">Aplikasi di dalam klon memakai izin lokasi Dual Space. Izinkan sekali di sini (pilih “Saat aplikasi digunakan”) agar klon berhenti meminta lokasi.</string>
 </resources>
