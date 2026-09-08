@@ -83,7 +83,9 @@ jobs:
           echo "No ad SDKs found."
 
       - name: Run unit tests
-        run: ./gradlew --no-daemon :app:testArm64ReleaseUnitTest
+        run: |
+          ./gradlew --no-daemon :app:testArm64ReleaseUnitTest
+          ./gradlew --no-daemon :Bcore:testReleaseUnitTest
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4

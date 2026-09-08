@@ -60,7 +60,10 @@ public class ActivityStack {
                 case LAUNCH_TIME_OUT:
                     ActivityRecord record = (ActivityRecord) msg.obj;
                     if (record != null) {
-                        mLaunchingActivities.remove(record);
+                        synchronized (mLaunchingActivities) {
+                            mLaunchingActivities.remove(record);
+                        }
+                        onLaunchTimedOut(record);
                     }
                     break;
                 default:
@@ -75,6 +78,70 @@ public class ActivityStack {
 
     /** Tag mirrored into the Dual Space log file (see Slog.setSinkTags). */
     private static final String ROUTING = "ActivityRouting";
+
+    /** Last time a clone was reopened after a lost start, per "userId:package". */
+    private final Map<String, Long> mLastRecovery = new LinkedHashMap<>();
+    private static final long RECOVERY_COOLDOWN_MS = 15_000L;
+
+    /**
+     * An activity we asked the system to start never reported back. If that leaves the clone
+     * with no window at all, the app is running with nothing on screen and the phone shows
+     * whatever was behind it — the state this project has been chasing. Reopen the app rather
+     * than leave the user staring at Dual Space.
+     *
+     * Only ever runs when a start was actually in flight, so leaving an app normally (Back out
+     * of its last screen) is untouched.
+     */
+    private void onLaunchTimedOut(ActivityRecord record) {
+        try {
+            if (record == null || record.info == null) {
+                return;
+            }
+            final int userId = record.userId;
+            final String packageName = record.info.packageName;
+            Slog.w(ROUTING, "activity " + record.component.getShortClassName()
+                    + " never started; checking whether " + packageName + " still has a window");
+
+            synchronized (mTasks) {
+                synchronizeTasks();
+                for (TaskRecord task : mTasks.values()) {
+                    for (ActivityRecord activity : task.activities) {
+                        if (activity.userId == userId && !activity.finished) {
+                            Slog.w(ROUTING, "  still showing " + activity.component.getShortClassName() + "; nothing to do");
+                            return;
+                        }
+                    }
+                }
+            }
+
+            String key = userId + ":" + packageName;
+            long now = android.os.SystemClock.elapsedRealtime();
+            Long last = mLastRecovery.get(key);
+            if (last != null && now - last < RECOVERY_COOLDOWN_MS) {
+                Slog.w(ROUTING, "  no window, but " + packageName + " was already reopened a moment ago");
+                return;
+            }
+            mLastRecovery.put(key, now);
+
+            Intent launch = new Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_LAUNCHER)
+                    .setPackage(packageName)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ResolveInfo resolveInfo = BPackageManagerService.get().resolveActivity(launch, GET_ACTIVITIES, null, userId);
+            if (resolveInfo == null || resolveInfo.activityInfo == null) {
+                Slog.w(ROUTING, "  no launch activity for " + packageName + "; cannot reopen it");
+                return;
+            }
+            launch.setComponent(ComponentUtils.toComponentName(resolveInfo.activityInfo));
+            Slog.w(ROUTING, "  -> " + packageName + " has no window left; reopening "
+                    + resolveInfo.activityInfo.name);
+            synchronized (mTasks) {
+                startActivityInNewTaskLocked(userId, launch, resolveInfo.activityInfo, null, 0);
+            }
+        } catch (Throwable t) {
+            Slog.w(ROUTING, "could not reopen the app after a lost start: " + t);
+        }
+    }
 
     /** The launch flags that decide where an activity lands, in a form a human can read. */
     private static String describeFlags(Intent intent) {
@@ -168,12 +235,21 @@ public class ActivityStack {
                 break;
         }
 
-        
-        if (taskRecord == null || taskRecord.needNewTask()) {
+        // The three decisions below are unit tested in LaunchRouterTest; everything the router
+        // marks CONTINUE is handled by the launch-mode code that follows.
+        LaunchRouter.Decision decision = LaunchRouter.decide(new LaunchRouter.Request()
+                .hasLiveTask(taskRecord != null && !taskRecord.needNewTask())
+                .launcherIntent(isLauncherIntent(intent))
+                .fromOutsideApp(sourceRecord == null)
+                .clearTask(clearTask)
+                .clearTop(clearTop)
+                .newTask(newTask));
+
+        if (decision == LaunchRouter.Decision.NEW_TASK) {
             Slog.i(ROUTING, "  -> new task (no live task for this app)");
             return startActivityInNewTaskLocked(userId, intent, activityInfo, resultTo, launchModeFlags);
         }
-        
+
         mAms.moveTaskToFront(taskRecord.id, 0);
 
         // Tapping a clone in Dual Space, or its home-screen shortcut, sends the app's launcher
@@ -185,8 +261,7 @@ public class ActivityStack {
         // Only for starts that come from outside the app (no source activity). An app
         // restarting *itself* through its launcher intent must really be started: swallowing
         // that start would leave it with no window once it finishes its old screens.
-        if (sourceRecord == null && isLauncherIntent(intent) && !clearTask && !clearTop
-                && taskRecord.getTopActivityRecord() != null) {
+        if (decision == LaunchRouter.Decision.RESUME_TASK && taskRecord.getTopActivityRecord() != null) {
             Slog.i(ROUTING, "  -> resuming task " + taskRecord.id + " (launcher intent from outside the app)");
             return 0;
         }
@@ -279,7 +354,7 @@ public class ActivityStack {
         // below would hand the system the token of an activity that is already finishing, the
         // start was dropped, and the user was left looking at whatever was behind the clone
         // (Dual Space itself), with the app logged in but its window gone.
-        if (clearTask && newTask) {
+        if (decision == LaunchRouter.Decision.CLEAR_TASK_NEW_ROOT) {
             for (ActivityRecord activity : taskRecord.activities) {
                 activity.finished = true;
             }
@@ -316,7 +391,10 @@ public class ActivityStack {
         if (liveSource == null) {
             liveSource = topActivityRecord;
         }
-        if (liveSource == null || liveSource.processRecord == null || liveSource.processRecord.appThread == null) {
+        boolean haveSomethingToStartFrom = liveSource != null
+                && liveSource.processRecord != null
+                && liveSource.processRecord.appThread != null;
+        if (LaunchRouter.mustStartFreshTask(haveSomethingToStartFrom)) {
             Slog.i(ROUTING, "  -> new task (nothing live left in task " + taskRecord.id + " to start from)");
             return startActivityInNewTaskLocked(userId, intent, activityInfo, null, launchModeFlags);
         }

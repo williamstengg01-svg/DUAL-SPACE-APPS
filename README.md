@@ -81,6 +81,15 @@ again.
 
 ## Changelog
 
+* **1.2.6** — a lost start can no longer leave a clone without a window, and the routing is
+  now covered by tests.
+  * Safety net: when an activity the engine asked for never appears and the clone is left with
+    no window at all, the app is reopened instead of dropping the user back into Dual Space.
+    It only runs when a start really was in flight, so leaving an app with Back is untouched.
+  * The launch routing (new task / resume / CLEAR_TASK restart / nothing-live-to-start-from)
+    moved into `LaunchRouter`, a plain class with no Android dependency, and every case seen in
+    the field logs is a unit test in `LaunchRouterTest`. The build runs them, so this class of
+    bug fails CI instead of reaching a phone.
 * **1.2.5** — the clone no longer drops back to Dual Space after login.
   * An app that restarts itself (`FLAG_ACTIVITY_CLEAR_TASK`, what a banking app does the
     moment login succeeds) had its task emptied but its replacement screen never started:
