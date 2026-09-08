@@ -17,6 +17,8 @@ public final class Slog {
 
     private static volatile Sink sSink;
     private static volatile int sSinkMinPriority = Log.WARN;
+    /** Tags that reach the sink whatever their priority (activity routing, for diagnosis). */
+    private static volatile java.util.Set<String> sSinkTags = java.util.Collections.emptySet();
 
     private Slog() {
     }
@@ -26,10 +28,15 @@ public final class Slog {
         sSinkMinPriority = minPriority;
     }
 
+    /** These tags are always mirrored to the sink, even below the minimum priority. */
+    public static void setSinkTags(String... tags) {
+        sSinkTags = new java.util.HashSet<>(java.util.Arrays.asList(tags));
+    }
+
     private static int out(int priority, String tag, String msg) {
         int r = Log.println(priority, tag, msg);
         Sink sink = sSink;
-        if (sink != null && priority >= sSinkMinPriority) {
+        if (sink != null && (priority >= sSinkMinPriority || sSinkTags.contains(tag))) {
             try {
                 sink.log(priority, tag, msg);
             } catch (Throwable ignored) {

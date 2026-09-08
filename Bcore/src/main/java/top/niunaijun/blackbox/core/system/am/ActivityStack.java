@@ -73,6 +73,23 @@ public class ActivityStack {
         mAms = (ActivityManager) BlackBoxCore.getContext().getSystemService(Context.ACTIVITY_SERVICE);
     }
 
+    /** Tag mirrored into the Dual Space log file (see Slog.setSinkTags). */
+    private static final String ROUTING = "ActivityRouting";
+
+    /** The launch flags that decide where an activity lands, in a form a human can read. */
+    private static String describeFlags(Intent intent) {
+        int f = intent.getFlags();
+        StringBuilder sb = new StringBuilder();
+        if ((f & Intent.FLAG_ACTIVITY_NEW_TASK) != 0) sb.append("NEW_TASK ");
+        if ((f & Intent.FLAG_ACTIVITY_CLEAR_TASK) != 0) sb.append("CLEAR_TASK ");
+        if ((f & Intent.FLAG_ACTIVITY_CLEAR_TOP) != 0) sb.append("CLEAR_TOP ");
+        if ((f & Intent.FLAG_ACTIVITY_SINGLE_TOP) != 0) sb.append("SINGLE_TOP ");
+        if ((f & Intent.FLAG_ACTIVITY_NO_HISTORY) != 0) sb.append("NO_HISTORY ");
+        if ((f & Intent.FLAG_ACTIVITY_REORDER_TO_FRONT) != 0) sb.append("REORDER_TO_FRONT ");
+        if (sb.length() == 0) sb.append("none");
+        return sb.toString().trim();
+    }
+
     /** True for the "tap the app icon" intent: ACTION_MAIN + CATEGORY_LAUNCHER. */
     private static boolean isLauncherIntent(Intent intent) {
         return intent != null
@@ -130,6 +147,12 @@ public class ActivityStack {
         boolean clearTop = containsFlag(intent, Intent.FLAG_ACTIVITY_CLEAR_TOP);
         boolean clearTask = containsFlag(intent, Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
+        Slog.i(ROUTING, "start " + ComponentUtils.toComponentName(activityInfo)
+                + " user=" + userId
+                + " flags=[" + describeFlags(intent) + "]"
+                + " launchMode=" + activityInfo.launchMode
+                + " from=" + (sourceRecord == null ? "outside the app" : sourceRecord.component.getShortClassName()));
+
         TaskRecord taskRecord = null;
         switch (activityInfo.launchMode) {
             case ActivityInfo.LAUNCH_SINGLE_TOP:
@@ -147,6 +170,7 @@ public class ActivityStack {
 
         
         if (taskRecord == null || taskRecord.needNewTask()) {
+            Slog.i(ROUTING, "  -> new task (no live task for this app)");
             return startActivityInNewTaskLocked(userId, intent, activityInfo, resultTo, launchModeFlags);
         }
         
@@ -157,10 +181,13 @@ public class ActivityStack {
         // stack a second copy of the launch activity on top of it. Stacking is what made a
         // clone come back on its splash screen showing a stale, half-logged-in UI while the
         // real screens sat underneath it.
-        if (isLauncherIntent(intent) && !clearTask && !clearTop
+        //
+        // Only for starts that come from outside the app (no source activity). An app
+        // restarting *itself* through its launcher intent must really be started: swallowing
+        // that start would leave it with no window once it finishes its old screens.
+        if (sourceRecord == null && isLauncherIntent(intent) && !clearTask && !clearTop
                 && taskRecord.getTopActivityRecord() != null) {
-            Log.d(TAG, "resuming existing task " + taskRecord.id + " for "
-                    + ComponentUtils.toComponentName(activityInfo) + " instead of starting it again");
+            Slog.i(ROUTING, "  -> resuming task " + taskRecord.id + " (launcher intent from outside the app)");
             return 0;
         }
 
@@ -246,20 +273,28 @@ public class ActivityStack {
             newIntentRecord = topActivityRecord;
         }
 
-        
+        // FLAG_ACTIVITY_CLEAR_TASK: throw the task away and make this activity its new root.
+        // Apps do this to restart themselves — which is exactly what a banking app does once
+        // login succeeds. Clearing was implemented, starting the replacement was not: the code
+        // below would hand the system the token of an activity that is already finishing, the
+        // start was dropped, and the user was left looking at whatever was behind the clone
+        // (Dual Space itself), with the app logged in but its window gone.
         if (clearTask && newTask) {
             for (ActivityRecord activity : taskRecord.activities) {
                 activity.finished = true;
             }
             finishAllActivity(userId);
+            Slog.i(ROUTING, "  -> CLEAR_TASK: task emptied, restarting as the root of a new task");
+            return startActivityInNewTaskLocked(userId, intent, activityInfo, null, launchModeFlags);
         }
-        
+
 
         if (newIntentRecord != null) {
-            
+            Slog.i(ROUTING, "  -> onNewIntent to the existing " + newIntentRecord.component.getShortClassName());
             deliverNewIntentLocked(newIntentRecord, intent);
             return 0;
         } else if (ignore) {
+            Slog.i(ROUTING, "  -> ignored (the same activity is already starting)");
             return 0;
         }
 
@@ -274,8 +309,19 @@ public class ActivityStack {
                 resultTo = top.token;
             }
         }
+        // Everything in the task was just finished (clearTop on the root, or the app finished
+        // its own stack). There is no live activity left to start from, so start a new task
+        // rather than dereferencing a dead record and losing the activity.
+        ActivityRecord liveSource = taskRecord.getTopActivityRecord();
+        if (liveSource == null) {
+            liveSource = topActivityRecord;
+        }
+        if (liveSource == null || liveSource.processRecord == null || liveSource.processRecord.appThread == null) {
+            Slog.i(ROUTING, "  -> new task (nothing live left in task " + taskRecord.id + " to start from)");
+            return startActivityInNewTaskLocked(userId, intent, activityInfo, null, launchModeFlags);
+        }
         return startActivityInSourceTask(intent,
-                resolvedType, resultTo, resultWho, requestCode, flags, options, userId, topActivityRecord, activityInfo, launchModeFlags);
+                resolvedType, resultTo, resultWho, requestCode, flags, options, userId, liveSource, activityInfo, launchModeFlags);
     }
 
     private void deliverNewIntentLocked(ActivityRecord activityRecord, Intent intent) {

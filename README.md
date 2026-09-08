@@ -81,6 +81,18 @@ again.
 
 ## Changelog
 
+* **1.2.5** — the clone no longer drops back to Dual Space after login.
+  * An app that restarts itself (`FLAG_ACTIVITY_CLEAR_TASK`, what a banking app does the
+    moment login succeeds) had its task emptied but its replacement screen never started:
+    the engine tried to start it *from* an activity that was already finishing, the system
+    dropped the start, and the clone's window disappeared — leaving Dual Space on screen
+    with the app logged in but invisible. The replacement now becomes the root of a fresh
+    task, and any start that has no live activity left to start from does the same instead
+    of being lost.
+  * The launcher-resume added in 1.2.4 no longer applies to an app restarting *itself*,
+    only to opening a clone from Dual Space or a home-screen shortcut.
+  * The log now records every activity-routing decision the engine makes (start flags,
+    which task, resume / onNewIntent / new task), so a stack problem can be read directly.
 * **1.2.4** — resuming clones, lighter slots, flexible setup.
   * Opening a clone that is already running now *resumes* it. The engine used to stack a
     second copy of the app's launch activity on the running task, so the clone came back on

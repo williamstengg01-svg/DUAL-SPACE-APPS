@@ -58,8 +58,11 @@ class DualSpaceApp : Application() {
                 // We keep our own bounded log file; the engine's endless logcat pipe stays off.
                 override fun isEnableLogcatCapture(): Boolean = false
             })
-            // Engine warnings and errors go into the same log file as ours.
+            // Engine warnings and errors go into the same log file as ours, plus every
+            // decision the engine makes about which activity to start or resume: that routing
+            // is where "the clone jumps back to the previous screen" is decided.
             Slog.setSink(DsLog, Log.WARN)
+            Slog.setSinkTags("ActivityRouting")
         } catch (e: Throwable) {
             DsLog.e(TAG, "Engine attach failed", e)
         }
