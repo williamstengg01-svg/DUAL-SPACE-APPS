@@ -81,6 +81,20 @@ again.
 
 ## Changelog
 
+* **1.2.4** — resuming clones, lighter slots, flexible setup.
+  * Opening a clone that is already running now *resumes* it. The engine used to stack a
+    second copy of the app's launch activity on the running task, so the clone came back on
+    its splash screen with a stale view while the real, logged-in screens sat underneath.
+  * The Play Store mirror is off by default (Settings → *Mirror the Play Store into clones*).
+    Clones still get Play Services; the Store only added two more processes per clone, and
+    that memory pressure is what makes Android destroy a clone's screens in the background.
+    Turning it off also removes it from slots that already have it.
+  * Setup wizard: no step blocks *Done* any more. It shows how many are set and lets you
+    continue with any of them; the steps only improve background survival.
+  * The mirrored Play Services no longer floods the log with refused `getCurrentUserId`
+    calls; it gets the user id the clone actually runs in.
+  * The log now records every screen shown, whether a screen was rebuilt from a saved state
+    and why a screen was destroyed, which is what identifies a "went back on its own" report.
 * **1.2.3** — in-place updates. The workflow signs with a permanent release key (PKCS12 from
   repository secrets; `storeType` now honoured in `keystore.properties`), and prints the
   signing certificate in the build log so a mismatch can be spotted before installing.

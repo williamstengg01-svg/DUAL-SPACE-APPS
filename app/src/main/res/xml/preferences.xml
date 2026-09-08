@@ -46,6 +46,11 @@
             android:key="gms"
             android:title="@string/pref_gms"
             app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            android:key="mirror_play_store"
+            android:title="@string/pref_play_store"
+            android:summary="@string/pref_play_store_summary"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_cat_about">

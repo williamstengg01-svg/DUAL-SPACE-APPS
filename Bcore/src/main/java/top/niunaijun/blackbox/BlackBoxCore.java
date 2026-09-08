@@ -1224,6 +1224,24 @@ public class BlackBoxCore extends ClientConfiguration {
         return GmsCore.isInstalledGoogleService(userId);
     }
 
+    /** @see GmsCore#setMirrorPlayStore(boolean) */
+    public void setMirrorPlayStore(boolean mirror) {
+        GmsCore.setMirrorPlayStore(mirror);
+    }
+
+    public boolean isMirrorPlayStore() {
+        return GmsCore.isMirrorPlayStore();
+    }
+
+    /** Remove the Play Store mirror from a slot, keeping Play Services. */
+    public void uninstallPlayStore(int userId) {
+        GmsCore.uninstallPlayStore(userId);
+    }
+
+    public boolean isPlayStoreInstalled(int userId) {
+        return GmsCore.isPlayStoreInstalled(userId);
+    }
+
     public InstallResult installGms(int userId) {
         return GmsCore.installGApps(userId);
     }

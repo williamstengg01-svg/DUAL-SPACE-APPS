@@ -61,6 +61,16 @@ object Prefs {
         get() = sp.getString("theme_mode", "system") ?: "system"
         set(v) = sp.edit { putString("theme_mode", v) }
 
+    // ---- engine behaviour ----
+    /**
+     * Mirror the Play Store into every clone slot as well as Play Services. Off by default:
+     * apps need Play *Services*, while the Store adds two more processes per clone and that
+     * memory pressure is what makes Android destroy a clone's screens in the background.
+     */
+    var mirrorPlayStore: Boolean
+        get() = sp.getBoolean("mirror_play_store", false)
+        set(v) = sp.edit { putBoolean("mirror_play_store", v) }
+
     // ---- permissions for clones ----
     /** Dual Space asked the user for location once (clones inherit it); never nag again. */
     var locationAsked: Boolean

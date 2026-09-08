@@ -158,4 +158,10 @@
 
     <string name="step_location_title">Lokasi untuk klon</string>
     <string name="step_location_desc">Aplikasi di dalam klon memakai izin lokasi Dual Space. Izinkan sekali di sini (pilih “Saat aplikasi digunakan”) agar klon berhenti meminta lokasi.</string>
+
+    <string name="setup_progress">%1$d dari %2$d selesai. Anda bisa lanjut kapan saja — langkah ini hanya membantu klon tetap berjalan di latar belakang.</string>
+    <string name="recommended">Disarankan</string>
+
+    <string name="pref_play_store">Sertakan Play Store di dalam klon</string>
+    <string name="pref_play_store_summary">Nonaktif secara bawaan. Klon selalu mendapat Google Play Services; Play Store menambah dua proses per klon dan bisa membuat Android menutup layar klon di latar belakang. Aktifkan hanya jika aplikasi klon memerlukan pembelian dalam aplikasi.</string>
 </resources>

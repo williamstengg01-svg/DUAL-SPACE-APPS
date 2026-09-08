@@ -73,6 +73,14 @@ public class ActivityStack {
         mAms = (ActivityManager) BlackBoxCore.getContext().getSystemService(Context.ACTIVITY_SERVICE);
     }
 
+    /** True for the "tap the app icon" intent: ACTION_MAIN + CATEGORY_LAUNCHER. */
+    private static boolean isLauncherIntent(Intent intent) {
+        return intent != null
+                && Intent.ACTION_MAIN.equals(intent.getAction())
+                && intent.getCategories() != null
+                && intent.getCategories().contains(Intent.CATEGORY_LAUNCHER);
+    }
+
     public boolean containsFlag(Intent intent, int flag) {
         return (intent.getFlags() & flag) != 0;
     }
@@ -143,6 +151,18 @@ public class ActivityStack {
         }
         
         mAms.moveTaskToFront(taskRecord.id, 0);
+
+        // Tapping a clone in Dual Space, or its home-screen shortcut, sends the app's launcher
+        // intent. A launcher is expected to *resume* the task that is already running, not to
+        // stack a second copy of the launch activity on top of it. Stacking is what made a
+        // clone come back on its splash screen showing a stale, half-logged-in UI while the
+        // real screens sat underneath it.
+        if (isLauncherIntent(intent) && !clearTask && !clearTop
+                && taskRecord.getTopActivityRecord() != null) {
+            Log.d(TAG, "resuming existing task " + taskRecord.id + " for "
+                    + ComponentUtils.toComponentName(activityInfo) + " instead of starting it again");
+            return 0;
+        }
 
         boolean notStartToFront = false;
         if (clearTop || singleTop || clearTask) {

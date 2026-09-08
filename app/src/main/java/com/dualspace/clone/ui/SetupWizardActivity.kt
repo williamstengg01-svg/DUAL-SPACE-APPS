@@ -19,8 +19,12 @@ import com.dualspace.clone.util.Prefs
 
 /**
  * One-time, brand-aware guided setup. Each row deep-links into the exact OEM settings
- * page (autostart, battery, background pop-up, notifications). The user ticks a step
- * after granting it; "battery" is verified automatically.
+ * page (autostart, battery, background pop-up, notifications). Battery, storage and
+ * location tick themselves once Android reports the grant; the OEM pages cannot be
+ * queried, so those are ticked by the user.
+ *
+ * No step blocks the app: every one of them only makes clones survive longer in the
+ * background, so "Done" is always available and the screen just shows how many are set.
  */
 class SetupWizardActivity : AppCompatActivity() {
 
@@ -61,8 +65,9 @@ class SetupWizardActivity : AppCompatActivity() {
     }
 
     private fun updateDone() {
-        val requiredDone = steps.filter { it.required }.all { Prefs.isStepDone(it.key) }
-        b.btnDone.isEnabled = requiredDone
+        val done = steps.count { Prefs.isStepDone(it.key) }
+        b.btnDone.isEnabled = true
+        b.progress.text = getString(R.string.setup_progress, done, steps.size)
     }
 
     private inner class StepAdapter(val items: List<BrandCompat.Step>) : RecyclerView.Adapter<StepAdapter.VH>() {
@@ -76,7 +81,9 @@ class SetupWizardActivity : AppCompatActivity() {
                 b.number.text = n.toString()
                 b.title.setText(step.title)
                 b.desc.setText(step.description)
-                b.optional.visibility = if (step.required) View.GONE else View.VISIBLE
+                // Nothing here is mandatory; the label only says how much a step matters.
+                b.optional.setText(if (step.required) R.string.recommended else R.string.optional)
+                b.optional.visibility = View.VISIBLE
                 b.check.setOnCheckedChangeListener(null)
                 b.check.isChecked = Prefs.isStepDone(step.key)
                 b.check.setOnCheckedChangeListener { _, on -> Prefs.setStepDone(step.key, on); updateDone() }

@@ -158,4 +158,10 @@
 
     <string name="step_location_title">分身的位置权限</string>
     <string name="step_location_desc">分身内的应用使用 Dual Space 的位置权限。在此允许一次（选择“仅在使用该应用时允许”），分身就不会再反复请求位置。</string>
+
+    <string name="setup_progress">已完成 %1$d / %2$d。随时可以继续——这些步骤只是帮助分身在后台保持运行。</string>
+    <string name="recommended">建议</string>
+
+    <string name="pref_play_store">在分身中镜像 Play 商店</string>
+    <string name="pref_play_store_summary">默认关闭。分身始终包含 Google Play 服务；Play 商店会为每个分身额外增加两个进程，可能导致系统在后台关闭分身的界面。仅在克隆应用需要应用内购买时开启。</string>
 </resources>

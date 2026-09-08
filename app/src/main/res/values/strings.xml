@@ -175,4 +175,11 @@
     <!-- v1.2.2 -->
     <string name="step_location_title">Location for clones</string>
     <string name="step_location_desc">Apps inside clones use Dual Space’s location permission. Allow it once here (choose “While using the app”) so clones stop asking for location.</string>
+
+    <!-- v1.2.4 -->
+    <string name="setup_progress">%1$d of %2$d set. You can continue at any time — these steps only help clones keep running in the background.</string>
+    <string name="recommended">Recommended</string>
+
+    <string name="pref_play_store">Mirror the Play Store into clones</string>
+    <string name="pref_play_store_summary">Off by default. Clones always get Google Play Services; the Store itself adds two more processes per clone and can make Android close a clone’s screens in the background. Turn on only if a cloned app needs in-app purchases.</string>
 </resources>

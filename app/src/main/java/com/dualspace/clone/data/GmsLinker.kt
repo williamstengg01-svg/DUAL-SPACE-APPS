@@ -128,7 +128,26 @@ object GmsLinker {
      * Services was updated since we last looked. Safe to call often; it is cheap when
      * nothing changed. Publishes a fresh [status] when done.
      */
+    /**
+     * Apply the "mirror Play Store" preference to the engine, and drop the Store from slots
+     * that already have it when the preference is off. Frees two processes per clone.
+     */
+    fun applyPlayStorePreference() {
+        val mirror = Prefs.mirrorPlayStore
+        runCatching { BlackBoxCore.get().setMirrorPlayStore(mirror) }
+        if (mirror) return
+        for (userId in CloneStore.userIds()) {
+            val present = runCatching { BlackBoxCore.get().isPlayStoreInstalled(userId) }.getOrDefault(false)
+            if (present) {
+                DsLog.i(TAG, "removing the Play Store mirror from slot $userId (setting is off)")
+                runCatching { BlackBoxCore.get().uninstallPlayStore(userId) }
+                    .onFailure { DsLog.w(TAG, "uninstallPlayStore(user=$userId) threw", it) }
+            }
+        }
+    }
+
     fun syncAll(context: Context) {
+        applyPlayStorePreference()
         if (!isSupported()) { refreshStatus(); return }
         val hostVersion = hostGmsVersion(context)
         val changed = hostVersion != Prefs.hostGmsVersion

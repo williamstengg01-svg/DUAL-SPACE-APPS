@@ -81,6 +81,15 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
 
+            val playStore = findPreference<SwitchPreferenceCompat>("mirror_play_store")!!
+            playStore.isChecked = Prefs.mirrorPlayStore
+            playStore.setOnPreferenceChangeListener { _, v ->
+                Prefs.mirrorPlayStore = v as Boolean
+                // Applying it touches the engine over Binder: never on the UI thread.
+                Thread { runCatching { GmsLinker.applyPlayStorePreference() } }.start()
+                true
+            }
+
             findPreference<Preference>("about")!!.summary = getString(
                 R.string.pref_about_summary, BuildConfig.VERSION_NAME,
                 if (BlackBoxCore.is64Bit()) "arm64-v8a" else "armeabi-v7a")

@@ -74,11 +74,27 @@ public class GmsCore {
         }
     }
 
-    public static InstallResult installGApps(int userId) {
-        Set<String> googleApps = new HashSet<>();
+    /**
+     * Whether the Play Store (and the other Google *apps*) are mirrored next to Play Services.
+     * Play Services is what cloned apps need for sign-in, push, maps and integrity; the Store
+     * only adds its own processes (com.android.vending plus a background one) to every slot,
+     * which is real memory pressure on smaller phones. Off unless the host turns it on.
+     */
+    private static volatile boolean sMirrorPlayStore = false;
 
-        googleApps.addAll(GOOGLE_SERVICE);
-        googleApps.addAll(GOOGLE_APP);
+    public static void setMirrorPlayStore(boolean mirror) {
+        sMirrorPlayStore = mirror;
+    }
+
+    public static boolean isMirrorPlayStore() {
+        return sMirrorPlayStore;
+    }
+
+    public static InstallResult installGApps(int userId) {
+        Set<String> googleApps = new HashSet<>(GOOGLE_SERVICE);
+        if (sMirrorPlayStore) {
+            googleApps.addAll(GOOGLE_APP);
+        }
 
         InstallResult installResult = installPackages(googleApps, userId);
         if (!installResult.success) {
@@ -86,6 +102,15 @@ public class GmsCore {
             return installResult;
         }
         return installResult;
+    }
+
+    /** Remove only the Google apps (Play Store and friends), keeping Play Services in place. */
+    public static void uninstallPlayStore(int userId) {
+        uninstallPackages(GOOGLE_APP, userId);
+    }
+
+    public static boolean isPlayStoreInstalled(int userId) {
+        return BlackBoxCore.get().isInstalled(VENDING_PKG, userId);
     }
 
     public static void uninstallGApps(int userId) {

@@ -773,6 +773,18 @@ public class IActivityManagerProxy extends ClassInvocationStub {
         }
     }
 
+    /**
+     * The mirrored Play Services asks for this constantly. Only the system may call it, so the
+     * real call throws and the caller has to guess; answer with the user we actually run in.
+     */
+    @ProxyMethod("getCurrentUserId")
+    public static class getCurrentUserId extends MethodHook {
+        @Override
+        protected Object hook(Object who, Method method, Object[] args) throws Throwable {
+            return BlackBoxCore.getHostUserId();
+        }
+    }
+
     @ProxyMethod("getCurrentUser")
     public static class getCurrentUser extends MethodHook {
         @Override

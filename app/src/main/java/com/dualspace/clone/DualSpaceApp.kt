@@ -98,6 +98,8 @@ class DualSpaceApp : Application() {
         // Make sure Google Play Services is linked in every clone slot and is refreshed
         // whenever the phone's own Play Services was updated — so clones never show a
         // "Play Services missing / out of date" prompt. Also publishes the first status.
+        // The engine must know the Play Store preference before anything is linked.
+        runCatching { BlackBoxCore.get().setMirrorPlayStore(Prefs.mirrorPlayStore) }
         appScope.launch {
             runCatching { GmsLinker.syncAll(this@DualSpaceApp) }
                 .onFailure { DsLog.e(TAG, "GMS sync at start failed", it) }
@@ -119,8 +121,22 @@ class DualSpaceApp : Application() {
             if (application != null) NetProbe.schedule(application, "$packageName/u$userId")
         }
 
+        // The screen trail below is what tells apart "the app went back on its own" from
+        // "Android destroyed the screen and rebuilt it from an old saved state". Both look
+        // identical to the user; only 'restored' and 'configChange' in this log separate them.
         override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {
-            DsLog.d("Clone", "activity created: ${activity.javaClass.name}")
+            DsLog.d("Clone", "activity created: ${activity.javaClass.name}" +
+                if (savedInstanceState != null) "  (RESTORED from saved state)" else "")
+        }
+
+        override fun onActivityResumed(activity: android.app.Activity) {
+            DsLog.d("Clone", "activity resumed: ${activity.javaClass.name}")
+        }
+
+        override fun onActivityDestroyed(activity: android.app.Activity) {
+            DsLog.d("Clone", "activity destroyed: ${activity.javaClass.name}" +
+                if (activity.isChangingConfigurations) "  (configChange)" else
+                    if (activity.isFinishing) "  (finished)" else "  (killed by the system)")
         }
     }
 
