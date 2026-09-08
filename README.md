@@ -81,6 +81,20 @@ again.
 
 ## Changelog
 
+* **1.2.7** — Android 16: every service binding inside a clone was crashing.
+  * Android 16 (API 36) added a parameter to the hidden framework interface the engine
+    implements to receive service connections (`IServiceConnection.connected()` gained an
+    `IBinderSession`). The engine only had the older two- and three-argument forms, so the
+    platform called a method that did not exist: `AbstractMethodError` on a binder thread,
+    which kills the whole clone process. Play Services inside a clone died over and over,
+    and any app screen waiting for a bound service — the security and identity checks in a
+    banking login — waited for a callback that could never arrive. All three signatures are
+    now implemented, and the call back into the app picks whichever form that Android has.
+  * Recovery from a lost start is staged and confirmed: it waits 4 s more before deciding,
+    reopens the app once, and only if that does not help restarts the clone's processes (a
+    wedged UI thread made every later launch a no-op). It also looks the launch activity up
+    the way a launcher does, which the previous attempt failed to do.
+  * `LostStartPolicy` is a plain class with unit tests, next to `LaunchRouter`.
 * **1.2.6** — a lost start can no longer leave a clone without a window, and the routing is
   now covered by tests.
   * Safety net: when an activity the engine asked for never appears and the clone is left with

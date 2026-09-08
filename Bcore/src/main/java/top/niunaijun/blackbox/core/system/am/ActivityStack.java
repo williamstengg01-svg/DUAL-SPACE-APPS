@@ -79,67 +79,121 @@ public class ActivityStack {
     /** Tag mirrored into the Dual Space log file (see Slog.setSinkTags). */
     private static final String ROUTING = "ActivityRouting";
 
-    /** Last time a clone was reopened after a lost start, per "userId:package". */
+    /** Last recovery attempt per "userId:package". */
     private final Map<String, Long> mLastRecovery = new LinkedHashMap<>();
-    private static final long RECOVERY_COOLDOWN_MS = 15_000L;
+    /**
+     * How long to wait before treating a start as lost. The engine's own launch timeout is two
+     * seconds, which a cold start on a slow phone can exceed, so confirm before acting.
+     */
+    private static final long VERIFY_DELAY_MS = 4_000L;
 
     /**
-     * An activity we asked the system to start never reported back. If that leaves the clone
-     * with no window at all, the app is running with nothing on screen and the phone shows
-     * whatever was behind it — the state this project has been chasing. Reopen the app rather
-     * than leave the user staring at Dual Space.
-     *
-     * Only ever runs when a start was actually in flight, so leaving an app normally (Back out
-     * of its last screen) is untouched.
+     * An activity the engine asked for never reported back. If the clone still shows something
+     * this is only a slow start; if it has no window at all, the app is running with nothing on
+     * screen and the phone shows whatever was behind it, which is the state this project has
+     * been chasing. Runs off the main thread: it may have to start a process.
      */
     private void onLaunchTimedOut(ActivityRecord record) {
+        if (record == null || record.info == null) {
+            return;
+        }
+        final int userId = record.userId;
+        final String packageName = record.info.packageName;
+        final String activityName = record.component == null ? "?" : record.component.getShortClassName();
+        new Thread(() -> verifyLostStart(userId, packageName, activityName), "bb-lost-start").start();
+    }
+
+    private void verifyLostStart(int userId, String packageName, String activityName) {
         try {
-            if (record == null || record.info == null) {
+            Thread.sleep(VERIFY_DELAY_MS);
+            if (hasLiveActivity(userId)) {
+                return; // it arrived after all
+            }
+            String key = userId + ":" + packageName;
+            long now = android.os.SystemClock.elapsedRealtime();
+            Long last;
+            synchronized (mLastRecovery) {
+                last = mLastRecovery.get(key);
+            }
+            LostStartPolicy.Action action = LostStartPolicy.decide(
+                    false, last != null, last == null ? Long.MAX_VALUE : now - last);
+            Slog.w(ROUTING, activityName + " never appeared and " + packageName
+                    + " (user " + userId + ") has no window left -> " + action);
+            if (action == LostStartPolicy.Action.NOTHING || action == LostStartPolicy.Action.WAIT) {
                 return;
             }
-            final int userId = record.userId;
-            final String packageName = record.info.packageName;
-            Slog.w(ROUTING, "activity " + record.component.getShortClassName()
-                    + " never started; checking whether " + packageName + " still has a window");
+            synchronized (mLastRecovery) {
+                mLastRecovery.put(key, now);
+            }
+            if (action == LostStartPolicy.Action.RESTART_PROCESSES) {
+                // Reopening did not help last time: the clone's process is wedged (a hung UI
+                // thread makes every later launch a no-op). Its data is on disk, so restarting
+                // it costs nothing but the unsaved screen the user cannot reach anyway.
+                Slog.w(ROUTING, "  restarting the processes of " + packageName);
+                try {
+                    BProcessManagerService.get().killPackageAsUser(packageName, userId);
+                    Thread.sleep(300);
+                } catch (Throwable t) {
+                    Slog.w(ROUTING, "  could not stop " + packageName + ": " + t);
+                }
+            }
+            reopen(packageName, userId);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+            Slog.w(ROUTING, "recovering " + packageName + " after a lost start failed: " + t);
+        }
+    }
 
-            synchronized (mTasks) {
-                synchronizeTasks();
-                for (TaskRecord task : mTasks.values()) {
-                    for (ActivityRecord activity : task.activities) {
-                        if (activity.userId == userId && !activity.finished) {
-                            Slog.w(ROUTING, "  still showing " + activity.component.getShortClassName() + "; nothing to do");
-                            return;
-                        }
+    private boolean hasLiveActivity(int userId) {
+        synchronized (mTasks) {
+            synchronizeTasks();
+            for (TaskRecord task : mTasks.values()) {
+                for (ActivityRecord activity : task.activities) {
+                    if (activity.userId == userId && !activity.finished) {
+                        return true;
                     }
                 }
             }
+        }
+        return false;
+    }
 
-            String key = userId + ":" + packageName;
-            long now = android.os.SystemClock.elapsedRealtime();
-            Long last = mLastRecovery.get(key);
-            if (last != null && now - last < RECOVERY_COOLDOWN_MS) {
-                Slog.w(ROUTING, "  no window, but " + packageName + " was already reopened a moment ago");
-                return;
-            }
-            mLastRecovery.put(key, now);
-
-            Intent launch = new Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_LAUNCHER)
-                    .setPackage(packageName)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            ResolveInfo resolveInfo = BPackageManagerService.get().resolveActivity(launch, GET_ACTIVITIES, null, userId);
-            if (resolveInfo == null || resolveInfo.activityInfo == null) {
-                Slog.w(ROUTING, "  no launch activity for " + packageName + "; cannot reopen it");
-                return;
-            }
-            launch.setComponent(ComponentUtils.toComponentName(resolveInfo.activityInfo));
-            Slog.w(ROUTING, "  -> " + packageName + " has no window left; reopening "
-                    + resolveInfo.activityInfo.name);
-            synchronized (mTasks) {
-                startActivityInNewTaskLocked(userId, launch, resolveInfo.activityInfo, null, 0);
+    private void reopen(String packageName, int userId) {
+        // Resolve the way the launcher does: query, then filter by package. resolveActivity()
+        // does not honour setPackage() here, which is why an earlier attempt found nothing.
+        Intent launch = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setPackage(packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ActivityInfo target = null;
+        try {
+            List<ResolveInfo> candidates = BPackageManagerService.get()
+                    .queryIntentActivities(launch, GET_ACTIVITIES, null, userId);
+            if (candidates != null) {
+                for (ResolveInfo candidate : candidates) {
+                    if (candidate.activityInfo != null
+                            && packageName.equals(candidate.activityInfo.packageName)) {
+                        target = candidate.activityInfo;
+                        break;
+                    }
+                }
             }
         } catch (Throwable t) {
-            Slog.w(ROUTING, "could not reopen the app after a lost start: " + t);
+            Slog.w(ROUTING, "  could not look up the launch activity of " + packageName + ": " + t);
+        }
+        if (target == null) {
+            Slog.w(ROUTING, "  " + packageName + " has no launch activity; cannot reopen it");
+            return;
+        }
+        launch.setComponent(ComponentUtils.toComponentName(target));
+        Slog.w(ROUTING, "  reopening " + target.name);
+        try {
+            synchronized (mTasks) {
+                startActivityInNewTaskLocked(userId, launch, target, null, 0);
+            }
+        } catch (Throwable t) {
+            Slog.w(ROUTING, "  reopening " + packageName + " failed: " + t);
         }
     }
 
