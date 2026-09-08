@@ -186,27 +186,40 @@ public class BPackageManagerService extends IBPackageManagerService.Stub impleme
         return chooseBestActivity(intent, resolvedType, flags, resolves);
     }
 
+    /**
+     * Picks the activity to start out of everything that matched.
+     *
+     * The real system can put a chooser on screen when several equally good activities match;
+     * inside a clone there is no chooser and nobody to ask, so an ambiguous match still has to
+     * resolve to *something*. It used to resolve to null instead, and that null travelled a
+     * long way: startActivityLocked silently dropped the start, and the recovery path that
+     * reopens a clone after a lost start reported "no launch activity for <package>" for apps
+     * that plainly have one. Any app shipping two ACTION_MAIN/CATEGORY_LAUNCHER entries of
+     * equal priority - an activity plus an alias, say - could not be reopened at all, so the
+     * clone bounced back to Dual Space over and over.
+     *
+     * The list arrives sorted best-first (priority, then preferred order), so the first usable
+     * entry is the right answer; we only reach past it to prefer a CATEGORY_DEFAULT match,
+     * which is what an implicit start is asking for.
+     */
     private ResolveInfo chooseBestActivity(Intent intent, String resolvedType,
                                            int flags, List<ResolveInfo> query) {
-        if (query != null) {
-            final int N = query.size();
-            if (N == 1) {
-                return query.get(0);
-            } else if (N > 1) {
-                
-                
-                ResolveInfo r0 = query.get(0);
-                ResolveInfo r1 = query.get(1);
-                
-                
-                if (r0.priority != r1.priority
-                        || r0.preferredOrder != r1.preferredOrder
-                        || r0.isDefault != r1.isDefault) {
-                    return query.get(0);
-                }
+        if (query == null || query.isEmpty()) {
+            return null;
+        }
+        ResolveInfo best = null;
+        for (ResolveInfo candidate : query) {
+            if (candidate == null || candidate.activityInfo == null) {
+                continue;
+            }
+            if (best == null) {
+                best = candidate;
+            }
+            if (candidate.isDefault) {
+                return candidate;
             }
         }
-        return null;
+        return best;
     }
 
     private List<ResolveInfo> queryIntentActivities(Intent intent,
@@ -234,8 +247,22 @@ public class BPackageManagerService extends IBPackageManagerService.Stub impleme
             }
         }
 
-        
+
         synchronized (mPackages) {
+            // Honour setPackage(), the way the public queryIntentActivities already does.
+            // Without this the query answered for every package in the slot at once, so an
+            // intent scoped to one app came back with the launcher activities of Play services
+            // and the Play Store too - several equally good matches for a question that had
+            // exactly one right answer.
+            final String pkgName = intent.getPackage();
+            if (pkgName != null) {
+                BPackageSettings bPackageSettings = mPackages.get(pkgName);
+                if (bPackageSettings == null) {
+                    return Collections.emptyList();
+                }
+                return mComponentResolver.queryActivities(
+                        intent, resolvedType, flags, bPackageSettings.pkg.activities, userId);
+            }
             return mComponentResolver.queryActivities(intent, resolvedType, flags, userId);
         }
     }

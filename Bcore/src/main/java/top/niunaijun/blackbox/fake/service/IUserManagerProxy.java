@@ -60,4 +60,22 @@ public class IUserManagerProxy extends BinderInvocationStub {
             return new ArrayList<>();
         }
     }
+
+    /**
+     * Answered here rather than passed through, because the real one needs a permission the
+     * host does not hold: on Android 14+ an unprivileged caller asking isMainUser gets
+     * "You either need MANAGE_USERS, CREATE_USERS, or QUERY_USERS permission to: query user".
+     * Play services asks this while it starts up, and the SecurityException took down the
+     * chimera service that was initialising.
+     *
+     * A clone runs inside the host app, which lives in whichever Android user installed Dual
+     * Space, so from the app's point of view it is always the main one.
+     */
+    @ProxyMethod("isMainUser")
+    public static class IsMainUser extends MethodHook {
+        @Override
+        protected Object hook(Object who, Method method, Object[] args) throws Throwable {
+            return true;
+        }
+    }
 }

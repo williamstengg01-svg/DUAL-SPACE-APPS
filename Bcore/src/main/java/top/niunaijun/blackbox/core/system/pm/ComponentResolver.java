@@ -374,6 +374,11 @@ public class ComponentResolver {
                 return null;
             }
             ServiceInfo si = PackageManagerCompat.generateServiceInfo(service, mFlags, ps.readUserState(userId), userId);
+            if (si == null) {
+                // Not installed (or hidden) for this user - not a match. See the note in
+                // ActivityIntentResolver.newResult.
+                return null;
+            }
 
             final ResolveInfo res = new ResolveInfo();
             res.serviceInfo = si;
@@ -478,6 +483,14 @@ public class ComponentResolver {
             }
             ActivityInfo ai =
                     PackageManagerCompat.generateActivityInfo(activity, mFlags, ps.readUserState(userId), userId);
+            if (ai == null) {
+                // Not installed (or hidden) for this user. Handing back a ResolveInfo with a null
+                // activityInfo made callers such as BActivityManagerService.sendBroadcast dereference
+                // it and throw; a component that does not resolve here simply is not a match. Play
+                // services, linked into some clone slots and not others, hit this on every broadcast
+                // it sent while starting up.
+                return null;
+            }
 
             final ResolveInfo res = new ResolveInfo();
             res.activityInfo = ai;
@@ -597,6 +610,11 @@ public class ComponentResolver {
             }
 
             ProviderInfo pi = PackageManagerCompat.generateProviderInfo(provider, mFlags, ps.readUserState(userId), userId);
+            if (pi == null) {
+                // Not installed (or hidden) for this user - not a match. See the note in
+                // ActivityIntentResolver.newResult.
+                return null;
+            }
             final ResolveInfo res = new ResolveInfo();
             res.providerInfo = pi;
             if ((mFlags & PackageManager.GET_RESOLVED_FILTER) != 0) {

@@ -79,6 +79,9 @@ public class BActivityManagerService extends IBActivityManagerService.Stub imple
         List<ResolveInfo> resolves = BPackageManagerService.get().queryBroadcastReceivers(intent, GET_META_DATA, resolvedType, userId);
 
         for (ResolveInfo resolve : resolves) {
+            if (resolve == null || resolve.activityInfo == null) {
+                continue;
+            }
             ProcessRecord processRecord = BProcessManagerService.get().findProcessRecord(resolve.activityInfo.packageName, resolve.activityInfo.processName, userId);
             if (processRecord == null) {
                 continue;
@@ -196,6 +199,9 @@ public class BActivityManagerService extends IBActivityManagerService.Stub imple
         }
         mBroadcastManager.sendBroadcast(pendingResultData);
         for (ResolveInfo resolve : resolves) {
+            if (resolve == null || resolve.activityInfo == null) {
+                continue;
+            }
             ProcessRecord processRecord = BProcessManagerService.get().findProcessRecord(resolve.activityInfo.packageName, resolve.activityInfo.processName, userId);
             if (processRecord != null) {
                 ReceiverData data = new ReceiverData();
